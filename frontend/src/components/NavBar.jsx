@@ -1,6 +1,7 @@
 import { Link, NavLink } from "react-router-dom";
 import BrandLogo from "./BrandLogo.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import { getAvatarByKey } from "../utils/avatars.js";
 
 const desktopLinkClass = ({ isActive }) =>
   `inline-flex items-center justify-center rounded-full px-4 py-2.5 text-sm font-semibold transition ${
@@ -30,6 +31,7 @@ const navItems = [
 
 export default function NavBar() {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const selectedAvatar = getAvatarByKey(user?.avatar_key);
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/92 backdrop-blur-xl">
       <div className="mx-auto max-w-7xl px-4 py-3 md:px-8 md:py-4">
@@ -143,10 +145,18 @@ export default function NavBar() {
                 </Link>
                 <Link
                   aria-label="Профиль"
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-violet-50 text-sm font-bold text-violet-700"
+                  className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-violet-50 text-sm font-bold text-violet-700"
                   to="/profile"
                 >
-                  {(user?.name || "A").slice(0, 1).toUpperCase()}
+                  {selectedAvatar ? (
+                    <img
+                      alt={user?.name || "Аватар профиля"}
+                      className="h-full w-full object-cover"
+                      src={selectedAvatar.src}
+                    />
+                  ) : (
+                    (user?.name || "A").slice(0, 1).toUpperCase()
+                  )}
                 </Link>
               </>
             ) : (

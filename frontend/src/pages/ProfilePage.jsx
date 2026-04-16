@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../api/client.js";
 import ProfileBookingsTab from "../components/ProfileBookingsTab.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import { avatarOptions, getAvatarByKey } from "../utils/avatars.js";
 
 function formatDate(dateValue) {
   if (!dateValue) {
@@ -90,7 +91,8 @@ export default function ProfilePage() {
   const [summary, setSummary] = useState(null);
   const [form, setForm] = useState({
     name: "",
-    email: ""
+    email: "",
+    avatar_key: ""
   });
   const [passwordForm, setPasswordForm] = useState(emptyPasswordForm);
   const [error, setError] = useState("");
@@ -107,7 +109,8 @@ export default function ProfilePage() {
         setProfile(profilePayload);
         setForm({
           name: profilePayload.name || "",
-          email: profilePayload.email || ""
+          email: profilePayload.email || "",
+          avatar_key: profilePayload.avatar_key || ""
         });
 
         if (isAdmin) {
@@ -178,7 +181,8 @@ export default function ProfilePage() {
 
       const payload = {
         name: form.name,
-        email: form.email
+        email: form.email,
+        avatar_key: form.avatar_key || null
       };
 
       if (passwordForm.new_password) {
@@ -200,6 +204,8 @@ export default function ProfilePage() {
   const setTab = (tabId) => {
     navigate(tabId === "overview" ? "/profile" : `/profile?tab=${tabId}`);
   };
+
+  const selectedAvatar = getAvatarByKey(form.avatar_key || profile?.avatar_key);
 
   return (
     <div className="space-y-6">
@@ -262,8 +268,16 @@ export default function ProfilePage() {
 
           <section className="admin-card p-6">
             <div className="flex flex-col items-center text-center">
-              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-violet-100 text-3xl font-bold text-violet-700">
-                {(profile?.name || user?.name || "A").slice(0, 1).toUpperCase()}
+              <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-violet-100 text-3xl font-bold text-violet-700">
+                {selectedAvatar ? (
+                  <img
+                    alt={profile?.name || user?.name || "Аватар профиля"}
+                    className="h-full w-full object-cover"
+                    src={selectedAvatar.src}
+                  />
+                ) : (
+                  (profile?.name || user?.name || "A").slice(0, 1).toUpperCase()
+                )}
               </div>
               <h2 className="mt-4 text-2xl font-bold text-slate-900">
                 {profile?.name || user?.name}
@@ -370,6 +384,53 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="rounded-[28px] border border-slate-200 bg-slate-50 p-5">
+                  <div className="text-sm font-semibold text-slate-900">
+                    Аватар профиля
+                  </div>
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                    {avatarOptions.map((avatar) => {
+                      const isActive = form.avatar_key === avatar.key;
+
+                      return (
+                        <button
+                          className={`rounded-[24px] border px-4 py-4 text-left ${
+                            isActive
+                              ? "border-violet-300 bg-violet-50"
+                              : "border-slate-200 bg-white"
+                          }`}
+                          key={avatar.key}
+                          onClick={() =>
+                            setForm((current) => ({
+                              ...current,
+                              avatar_key: avatar.key
+                            }))
+                          }
+                          type="button"
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="h-16 w-16 overflow-hidden rounded-full border border-slate-200 bg-violet-50">
+                              <img
+                                alt={avatar.label}
+                                className="h-full w-full object-cover"
+                                src={avatar.src}
+                              />
+                            </div>
+                            <div>
+                              <div className="font-semibold text-slate-900">
+                                {avatar.label}
+                              </div>
+                              <div className="mt-1 text-sm text-slate-500">
+                                {isActive ? "Выбрана для аккаунта" : "Нажмите, чтобы выбрать"}
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="rounded-[28px] border border-slate-200 bg-slate-50 p-5">
                   <div className="text-sm font-semibold text-slate-900">Смена пароля</div>
                   <div className="mt-4 grid gap-5 md:grid-cols-3">
                     <label className="block">
@@ -421,7 +482,8 @@ export default function ProfilePage() {
                     onClick={() => {
                       setForm({
                         name: profile?.name || user?.name || "",
-                        email: profile?.email || user?.email || ""
+                        email: profile?.email || user?.email || "",
+                        avatar_key: profile?.avatar_key || user?.avatar_key || ""
                       });
                       setPasswordForm(emptyPasswordForm);
                       setError("");

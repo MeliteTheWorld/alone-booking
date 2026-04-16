@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS users (
   name VARCHAR(120) NOT NULL,
   email VARCHAR(180) NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
+  avatar_key VARCHAR(64),
   role user_role NOT NULL DEFAULT 'client',
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );

@@ -5,12 +5,19 @@ import { requireAuth } from "../middleware/auth.js";
 import { hashPassword, verifyPassword } from "../utils/password.js";
 
 const router = Router();
+const VALID_AVATAR_KEYS = [
+  "avatar-1",
+  "avatar-2",
+  "avatar-3",
+  "avatar-4"
+];
 
 function sanitizeUser(user) {
   return {
     id: user.id,
     name: user.name,
     email: user.email,
+    avatar_key: user.avatar_key || null,
     role: user.role
   };
 }
@@ -49,11 +56,11 @@ router.post("/register", async (req, res) => {
 
     const result = await query(
       `
-        INSERT INTO users (name, email, password_hash, role)
-        VALUES ($1, $2, $3, 'client')
-        RETURNING id, name, email, role
+        INSERT INTO users (name, email, password_hash, avatar_key, role)
+        VALUES ($1, $2, $3, $4, 'client')
+        RETURNING id, name, email, avatar_key, role
       `,
-      [name, email.toLowerCase(), hashPassword(password)]
+      [name, email.toLowerCase(), hashPassword(password), null]
     );
 
     const user = result.rows[0];
@@ -78,6 +85,7 @@ router.post("/login", async (req, res) => {
     const result = await query(
       `
         SELECT id, name, email, password_hash, role
+             , avatar_key
         FROM users
         WHERE email = $1
       `,
@@ -106,6 +114,7 @@ router.get("/me", requireAuth, async (req, res) => {
     const result = await query(
       `
         SELECT id, name, email, role, created_at
+             , avatar_key
         FROM users
         WHERE id = $1
       `,
@@ -124,7 +133,7 @@ router.get("/me", requireAuth, async (req, res) => {
 
 router.patch("/me", requireAuth, async (req, res) => {
   try {
-    const { name, email, current_password, new_password } = req.body;
+    const { name, email, current_password, new_password, avatar_key } = req.body;
 
     if (!name || !email) {
       return res.status(400).json({ message: "Имя и email обязательны" });
@@ -133,6 +142,7 @@ router.patch("/me", requireAuth, async (req, res) => {
     const currentUserResult = await query(
       `
         SELECT id, name, email, password_hash, role
+             , avatar_key
         FROM users
         WHERE id = $1
       `,
@@ -146,6 +156,17 @@ router.patch("/me", requireAuth, async (req, res) => {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+    const normalizedAvatarKey =
+      avatar_key === undefined || avatar_key === null || avatar_key === ""
+        ? null
+        : String(avatar_key).trim();
+
+    if (
+      normalizedAvatarKey &&
+      !VALID_AVATAR_KEYS.includes(normalizedAvatarKey)
+    ) {
+      return res.status(400).json({ message: "Выбрана некорректная аватарка" });
+    }
 
     const duplicateUser = await query(
       "SELECT id FROM users WHERE email = $1 AND id <> $2",
@@ -183,11 +204,18 @@ router.patch("/me", requireAuth, async (req, res) => {
         UPDATE users
         SET name = $1,
             email = $2,
-            password_hash = $3
-        WHERE id = $4
-        RETURNING id, name, email, role, created_at
+            password_hash = $3,
+            avatar_key = $4
+        WHERE id = $5
+        RETURNING id, name, email, avatar_key, role, created_at
       `,
-      [name.trim(), normalizedEmail, nextPasswordHash, req.user.id]
+      [
+        name.trim(),
+        normalizedEmail,
+        nextPasswordHash,
+        normalizedAvatarKey,
+        req.user.id
+      ]
     );
 
     const updatedUser = sanitizeUser(result.rows[0]);
