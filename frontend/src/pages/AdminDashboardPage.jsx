@@ -65,36 +65,6 @@ const statsConfig = [
 ];
 
 const weekLabels = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
-const desktopActionsByStatus = {
-  pending: [
-    {
-      status: "confirmed",
-      label: "Подтвердить"
-    },
-    {
-      status: "cancelled",
-      label: "Отменить"
-    }
-  ],
-  confirmed: [
-    {
-      status: "in_progress",
-      label: "В работу"
-    },
-    {
-      status: "cancelled",
-      label: "Отменить"
-    }
-  ],
-  in_progress: [
-    {
-      status: "completed",
-      label: "Услуга оказана"
-    }
-  ],
-  completed: [],
-  cancelled: []
-};
 
 export default function AdminDashboardPage() {
   const { user } = useAuth();
@@ -104,7 +74,6 @@ export default function AdminDashboardPage() {
   const [actionableBookings, setActionableBookings] = useState([]);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const [openMenuId, setOpenMenuId] = useState(null);
 
   async function loadData() {
     try {
@@ -126,7 +95,7 @@ export default function AdminDashboardPage() {
           .filter((booking) =>
             ["pending", "confirmed", "in_progress"].includes(booking.status)
           )
-          .slice(0, 6)
+          .slice(0, 3)
       );
     } catch (loadError) {
       setError(loadError.message);
@@ -137,26 +106,9 @@ export default function AdminDashboardPage() {
     loadData();
   }, []);
 
-  useEffect(() => {
-    if (!openMenuId) {
-      return undefined;
-    }
-
-    const handleWindowClick = () => {
-      setOpenMenuId(null);
-    };
-
-    window.addEventListener("click", handleWindowClick);
-
-    return () => {
-      window.removeEventListener("click", handleWindowClick);
-    };
-  }, [openMenuId]);
-
   const handleStatusChange = async (id, status) => {
     try {
       setError("");
-      setOpenMenuId(null);
       await api.bookings.updateStatus(id, status);
       setMessage(
         status === "confirmed"
@@ -182,7 +134,6 @@ export default function AdminDashboardPage() {
 
     try {
       setError("");
-      setOpenMenuId(null);
       await api.bookings.remove(id);
       setMessage("Запись удалена");
       await loadData();
@@ -269,7 +220,7 @@ export default function AdminDashboardPage() {
             <div>
               <h2 className="text-2xl font-bold text-slate-900">Ближайшие записи</h2>
               <p className="mt-1 text-sm text-slate-500">
-                Управляйте расписанием на ближайшие дни и отмечайте статус прямо из таблицы.
+                Показываем только три ближайшие записи, чтобы администратор сразу видел главный приоритет.
               </p>
             </div>
             <Link className="text-sm font-semibold text-violet-600 hover:text-violet-700" to="/admin?tab=calendar">
@@ -278,145 +229,76 @@ export default function AdminDashboardPage() {
           </div>
 
           {actionableBookings.length ? (
-            <>
-              <div className="hidden md:block">
-                <table className="w-full table-fixed text-left">
-                  <colgroup>
-                    <col className="w-[27%]" />
-                    <col className="w-[23%]" />
-                    <col className="w-[17%]" />
-                    <col className="w-[23%]" />
-                    <col className="w-[10%]" />
-                  </colgroup>
-                  <thead className="border-b border-slate-200 bg-slate-50/80 text-xs uppercase tracking-[0.16em] text-slate-400">
-                    <tr>
-                      <th className="px-6 py-4 font-semibold">Клиент</th>
-                      <th className="px-4 py-4 font-semibold">Услуга</th>
-                      <th className="px-4 py-4 font-semibold">Время</th>
-                      <th className="px-4 py-4 font-semibold">Статус</th>
-                      <th className="px-4 py-4 font-semibold text-center">Действия</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {actionableBookings.map((booking) => (
-                      <tr className="border-b border-slate-100 last:border-b-0" key={booking.id}>
-                        <td className="px-6 py-5 align-middle">
-                          <div className="min-w-0">
-                            <div className="font-semibold text-slate-900">{booking.user_name}</div>
-                            <div className="mt-1 truncate text-sm text-slate-500">
-                              {booking.user_email}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-5 align-middle">
-                          <div className="font-semibold leading-6 text-slate-900">
-                            {booking.service_name}
-                          </div>
-                        </td>
-                        <td className="px-4 py-5 align-middle text-sm text-slate-600">
-                          <div>
-                            {new Date(booking.booking_date).toLocaleDateString("ru-RU", {
-                              day: "2-digit",
-                              month: "2-digit"
-                            })}
-                          </div>
-                          <div className="mt-1 font-semibold text-slate-900">
-                            {booking.booking_time.slice(0, 5)}
-                          </div>
-                        </td>
-                        <td className="px-4 py-5 align-middle">
-                          <div className="max-w-[140px] pr-2">
-                            <BookingStatusBadge status={booking.status} />
-                          </div>
-                        </td>
-                        <td className="px-4 py-5 align-middle">
-                          <div className="flex justify-center">
-                            <div className="relative">
-                              <button
-                                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:text-slate-700"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  setOpenMenuId((current) =>
-                                    current === booking.id ? null : booking.id
-                                  );
-                                }}
-                                type="button"
-                              >
-                                <svg
-                                  aria-hidden="true"
-                                  className="h-5 w-5"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    d="M12 6.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM12 12.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM12 18.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z"
-                                    stroke="currentColor"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="1.8"
-                                  />
-                                </svg>
-                              </button>
-
-                              {openMenuId === booking.id && (
-                                <div
-                                  className="absolute right-0 top-12 z-20 w-44 rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_18px_40px_rgba(15,23,42,0.14)]"
-                                  onClick={(event) => event.stopPropagation()}
-                                >
-                                  <div className="space-y-1">
-                                    {(desktopActionsByStatus[booking.status] || []).map((action) => (
-                                      <button
-                                        key={action.status}
-                                        className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                                        onClick={() => handleStatusChange(booking.id, action.status)}
-                                        type="button"
-                                      >
-                                        <span>{action.label}</span>
-                                      </button>
-                                    ))}
-
-                                    <button
-                                      className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50"
-                                      onClick={() => handleDelete(booking.id)}
-                                      type="button"
-                                    >
-                                      <span>Удалить</span>
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="space-y-4 p-4 md:hidden">
-                {actionableBookings.map((booking) => (
-                  <div className="rounded-3xl border border-slate-200 bg-white p-4" key={booking.id}>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <div className="font-semibold text-slate-900">{booking.service_name}</div>
-                      <BookingStatusBadge status={booking.status} />
+            <div className="grid gap-4 p-4 md:p-5 xl:grid-cols-1">
+              {actionableBookings.map((booking) => (
+                <div
+                  className="rounded-[28px] border border-slate-200 bg-white p-5 md:p-6"
+                  key={booking.id}
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xl font-bold leading-tight text-slate-900 md:text-2xl">
+                        {booking.service_name}
+                      </div>
+                      <div className="mt-2 text-sm text-slate-500">
+                        Ближайшая запись клиента в работе администратора
+                      </div>
                     </div>
-                    <div className="mt-3 text-sm text-slate-600">
-                      {booking.user_name} • {new Date(booking.booking_date).toLocaleDateString("ru-RU")} •{" "}
-                      {booking.booking_time.slice(0, 5)}
+                    <BookingStatusBadge status={booking.status} />
+                  </div>
+
+                  <div className="mt-5 grid gap-3 md:grid-cols-3">
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                      <div className="text-xs uppercase tracking-[0.14em] text-slate-400">
+                        Клиент
+                      </div>
+                      <div className="mt-2 font-semibold text-slate-900">
+                        {booking.user_name}
+                      </div>
+                      <div className="mt-1 truncate text-sm text-slate-500">
+                        {booking.user_email}
+                      </div>
                     </div>
-                    <div className="mt-4">
-                      <BookingAdminActions
-                        fullWidth
-                        onAction={(status) => handleStatusChange(booking.id, status)}
-                        onDelete={() => handleDelete(booking.id)}
-                        status={booking.status}
-                      />
+
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                      <div className="text-xs uppercase tracking-[0.14em] text-slate-400">
+                        Дата
+                      </div>
+                      <div className="mt-2 font-semibold text-slate-900">
+                        {new Date(booking.booking_date).toLocaleDateString("ru-RU", {
+                          day: "2-digit",
+                          month: "long"
+                        })}
+                      </div>
+                      <div className="mt-1 text-sm text-slate-500">
+                        {new Date(booking.booking_date).toLocaleDateString("ru-RU", {
+                          weekday: "long"
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3">
+                      <div className="text-xs uppercase tracking-[0.14em] text-violet-500">
+                        Время
+                      </div>
+                      <div className="mt-2 text-2xl font-bold text-violet-700">
+                        {booking.booking_time.slice(0, 5)}
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </>
+
+                  <div className="mt-5">
+                    <BookingAdminActions
+                      compact
+                      fullWidth
+                      onAction={(status) => handleStatusChange(booking.id, status)}
+                      onDelete={() => handleDelete(booking.id)}
+                      status={booking.status}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : (
             <div className="px-6 py-8 text-sm text-slate-500">
               Сейчас нет записей, которые требуют действий администратора.

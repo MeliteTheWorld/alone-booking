@@ -57,3 +57,6 @@ CREATE TABLE IF NOT EXISTS bookings (
 CREATE INDEX IF NOT EXISTS idx_bookings_user ON bookings(user_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_service ON bookings(service_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_date_time ON bookings(booking_date, booking_time);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_bookings_unique_active_user_slot
+  ON bookings(user_id, booking_date, booking_time)
+  WHERE status IN ('pending', 'confirmed', 'in_progress');

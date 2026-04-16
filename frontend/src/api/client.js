@@ -87,7 +87,8 @@ export const api = {
         method: "PATCH",
         body: JSON.stringify({ status })
       }),
-    summary: () => request("/bookings/dashboard/summary")
+    summary: () => request("/bookings/dashboard/summary"),
+    analytics: () => request("/bookings/dashboard/analytics")
   },
   schedule: {
     getSlots: (serviceId, date, excludeBookingId) => {

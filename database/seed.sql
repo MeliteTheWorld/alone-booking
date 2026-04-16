@@ -2,8 +2,8 @@ INSERT INTO users (name, email, password_hash, role)
 VALUES
   (
     'Администратор',
-    'admin@smartbooking.local',
-    'e9560da8afa38e92a323ee777fb96826:3ea695d3d4943799d443199dd84e0f3e54ceeb542cdbcf6d78c6b59840706d9a5ed795e088aa23bf812ed40b2a68c83ce64a79b073bf11bb59663899ab51ed1c',
+    'admin@alone.local',
+    '1cc787c0ed8e4040b1eb09ed0537b1bb:07d8cddaed0950d47003ec8759b698e886ccaec650e60aca9ab630758669fea0ffa5b8bea53ea850ce6d732f666af4aa44c271261f5ea9ca555c8a7b553c0264',
     'admin'
   ),
   (

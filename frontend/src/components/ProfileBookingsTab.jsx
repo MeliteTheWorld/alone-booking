@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api/client.js";
 import AnimatedCollapse from "./AnimatedCollapse.jsx";
 import BookingStatusBadge from "./BookingStatusBadge.jsx";
+import DatePickerField from "./DatePickerField.jsx";
 
 function formatDate(dateValue) {
   return new Date(dateValue).toLocaleDateString("ru-RU", {
@@ -13,20 +14,6 @@ function formatDate(dateValue) {
 
 function todayString() {
   return new Date().toISOString().slice(0, 10);
-}
-
-function CalendarIcon() {
-  return (
-    <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24">
-      <path
-        d="M7 3v4M17 3v4M4 9h16M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.8"
-      />
-    </svg>
-  );
 }
 
 export default function ProfileBookingsTab() {
@@ -147,19 +134,12 @@ export default function ProfileBookingsTab() {
                 >
                   <div className="space-y-4 rounded-3xl border border-slate-200 bg-slate-50 p-4">
                     <label className="block">
-                      <span className="ui-label">Новая дата</span>
-                      <div className="ui-field-wrap">
-                        <input
-                          className="ui-date-field"
-                          min={todayString()}
-                          onChange={(event) => updateDate(event.target.value)}
-                          type="date"
-                          value={editorDate}
-                        />
-                        <span className="ui-field-icon">
-                          <CalendarIcon />
-                        </span>
-                      </div>
+                      <DatePickerField
+                        label="Новая дата"
+                        min={todayString()}
+                        onChange={updateDate}
+                        value={editorDate}
+                      />
                     </label>
                     <div>
                       <div className="ui-label">Свободные слоты</div>

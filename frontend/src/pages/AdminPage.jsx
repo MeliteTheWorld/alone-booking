@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import BrandLogo from "../components/BrandLogo.jsx";
+import AdminAnalyticsPage from "./AdminAnalyticsPage.jsx";
 import AdminDashboardPage from "./AdminDashboardPage.jsx";
 import CalendarPage from "./CalendarPage.jsx";
 import ManageServicesPage from "./ManageServicesPage.jsx";
@@ -53,6 +53,22 @@ const tabs = [
         />
       </svg>
     )
+  },
+  {
+    id: "analytics",
+    label: "Аналитика",
+    helper: "Выручка и метрики",
+    icon: (
+      <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24">
+        <path
+          d="M5 19V10M12 19V5M19 19v-8M4 19h16"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.8"
+        />
+      </svg>
+    )
   }
 ];
 
@@ -64,6 +80,8 @@ export default function AdminPage() {
 
   const content = useMemo(() => {
     switch (activeTab) {
+      case "analytics":
+        return <AdminAnalyticsPage />;
       case "services":
         return <ManageServicesPage />;
       case "calendar":
@@ -80,12 +98,17 @@ export default function AdminPage() {
 
   return (
     <div className="admin-shell">
-      <div className="md:grid md:grid-cols-[240px_minmax(0,1fr)]">
+      <div className="md:grid md:grid-cols-[280px_minmax(0,1fr)]">
         <aside className="border-b border-slate-200 bg-white md:min-h-[calc(100vh-180px)] md:border-b-0 md:border-r">
           <div className="p-4 md:p-5">
             <div className="hidden md:block">
-              <BrandLogo compact to="/admin" />
-              <p className="mt-4 text-sm leading-6 text-slate-500">
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-600">
+                Панель управления
+              </div>
+              <h2 className="mt-3 text-2xl font-bold text-slate-900">
+                Админка ALONE
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-slate-500">
                 Управляйте расписанием, услугами и текущей загрузкой в одном месте.
               </p>
             </div>
@@ -110,18 +133,20 @@ export default function AdminPage() {
                 return (
                   <button
                     key={tab.id}
-                    className={`admin-sidebar-link w-full justify-between ${
+                    className={`admin-sidebar-link w-full ${
                       isActive ? "admin-sidebar-link-active" : ""
                     }`}
                     onClick={() => setTab(tab.id)}
                     type="button"
                   >
-                    <span className="flex items-center gap-3">
+                    <span className="flex items-start gap-3">
                       {tab.icon}
-                      <span>{tab.label}</span>
-                    </span>
-                    <span className="hidden text-xs font-medium text-slate-400 md:inline">
-                      {tab.helper}
+                      <span className="min-w-0 text-left">
+                        <span className="block">{tab.label}</span>
+                        <span className="mt-1 block text-xs font-medium text-slate-400">
+                          {tab.helper}
+                        </span>
+                      </span>
                     </span>
                   </button>
                 );

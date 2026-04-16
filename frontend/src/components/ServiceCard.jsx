@@ -1,23 +1,47 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 
+function getDurationBadge(duration) {
+  if (Number(duration) <= 45) {
+    return "Быстрый визит";
+  }
+
+  if (Number(duration) <= 75) {
+    return "Стандартный формат";
+  }
+
+  return "Длительная услуга";
+}
+
 export default function ServiceCard({ service }) {
   const { isAdmin } = useAuth();
 
   return (
-    <article className="surface flex h-full flex-col p-5 md:p-6">
-      <div className="chip">{service.duration} мин</div>
-      <h3 className="mt-4 font-display text-2xl font-bold text-slate-900">{service.name}</h3>
+    <article className="surface flex h-full flex-col p-5">
+      <div className="flex flex-wrap gap-2">
+        <div className="chip">{service.duration} мин</div>
+        <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+          {getDurationBadge(service.duration)}
+        </div>
+      </div>
+
+      <h3 className="mt-4 font-display text-2xl font-bold text-slate-900">
+        {service.name}
+      </h3>
       <p className="mt-3 flex-1 text-sm leading-6 text-slate-500">
         {service.description}
       </p>
-      <p className="mt-4 text-sm text-slate-500">
-        Исполнитель:{" "}
-        <span className="font-semibold text-slate-900">
+
+      <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5">
+        <div className="text-xs uppercase tracking-[0.14em] text-slate-400">
+          Исполнитель
+        </div>
+        <div className="mt-2 text-sm font-semibold text-slate-900">
           {service.staff_name || "Не назначен"}
-        </span>
-      </p>
-      <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        </div>
+      </div>
+
+      <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="text-sm text-slate-500">Стоимость</div>
           <div className="text-xl font-bold text-slate-900">
