@@ -7,6 +7,34 @@ function todayString() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function ChevronIcon() {
+  return (
+    <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24">
+      <path
+        d="m6 9 6 6 6-6"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+    </svg>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24">
+      <path
+        d="M7 3v4M17 3v4M4 9h16M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+    </svg>
+  );
+}
+
 export default function BookingPage() {
   const { isAuthenticated, isAdmin } = useAuth();
   const [searchParams] = useSearchParams();
@@ -93,44 +121,69 @@ export default function BookingPage() {
         )}
 
         <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
-          <select
-            className="field"
-            onChange={(event) => setSelectedService(event.target.value)}
-            value={selectedService}
-          >
-            <option value="">Выберите услугу</option>
-            {services.map((service) => (
-              <option key={service.id} value={service.id}>
-                {service.name} • {service.staff_name || "Не назначен"} • {service.duration} мин •{" "}
-                {Number(service.price).toLocaleString("ru-RU")} ₽
-              </option>
-            ))}
-          </select>
+          <label className="block">
+            <span className="ui-label">Услуга</span>
+            <div className="ui-field-wrap">
+              <select
+                className="ui-select-field"
+                onChange={(event) => setSelectedService(event.target.value)}
+                value={selectedService}
+              >
+                <option value="">Выберите услугу</option>
+                {services.map((service) => (
+                  <option key={service.id} value={service.id}>
+                    {service.name} • {service.staff_name || "Не назначен"} • {service.duration} мин •{" "}
+                    {Number(service.price).toLocaleString("ru-RU")} ₽
+                  </option>
+                ))}
+              </select>
+              <span className="ui-field-icon">
+                <ChevronIcon />
+              </span>
+            </div>
+          </label>
 
-          <input
-            className="field"
-            min={todayString()}
-            onChange={(event) => setSelectedDate(event.target.value)}
-            type="date"
-            value={selectedDate}
-          />
+          <label className="block">
+            <span className="ui-label">Дата</span>
+            <div className="ui-field-wrap">
+              <input
+                className="ui-date-field"
+                min={todayString()}
+                onChange={(event) => setSelectedDate(event.target.value)}
+                type="date"
+                value={selectedDate}
+              />
+              <span className="ui-field-icon">
+                <CalendarIcon />
+              </span>
+            </div>
+          </label>
 
-          <select
-            className="field"
-            disabled={!slots.length}
-            onChange={(event) => setSelectedTime(event.target.value)}
-            required
-            value={selectedTime}
-          >
-            <option value="">
-              {slots.length ? "Выберите время" : "Свободные слоты не найдены"}
-            </option>
-            {slots.map((slot) => (
-              <option key={slot} value={slot}>
-                {slot}
-              </option>
-            ))}
-          </select>
+          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+            <div className="text-sm font-semibold text-slate-700">Время</div>
+            <div className="mt-3">
+              {slots.length ? (
+                <div className="ui-slot-grid">
+                  {slots.map((slot) => (
+                    <button
+                      key={slot}
+                      className={`ui-slot-button ${
+                        selectedTime === slot ? "ui-slot-button-active" : ""
+                      }`}
+                      onClick={() => setSelectedTime(slot)}
+                      type="button"
+                    >
+                      {slot}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="ui-slot-button ui-slot-button-disabled w-full justify-center">
+                  Свободные слоты не найдены
+                </div>
+              )}
+            </div>
+          </div>
 
           {error && <div className="text-sm text-fuchsia-700">{error}</div>}
           {message && <div className="text-sm text-violet-700">{message}</div>}

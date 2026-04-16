@@ -271,12 +271,12 @@ export default function AuthPage({ initialMode = "login" }) {
       title={isLogin ? (adminAccess ? "Вход администратора" : "С возвращением") : "Создайте аккаунт"}
     >
       <div
-        className={`relative overflow-hidden transition-[min-height] duration-300 ${
+        className={`relative overflow-hidden ${
           isLogin ? "min-h-[580px] md:min-h-[540px]" : "min-h-[560px] md:min-h-[500px]"
         }`}
       >
         <div
-          className={`absolute inset-0 transition-all duration-300 ${
+          className={`absolute inset-0 ${
             isLogin
               ? "translate-x-0 opacity-100"
               : "-translate-x-6 pointer-events-none opacity-0"
@@ -410,7 +410,7 @@ export default function AuthPage({ initialMode = "login" }) {
         </div>
 
         <div
-          className={`absolute inset-0 transition-all duration-300 ${
+          className={`absolute inset-0 ${
             !isLogin
               ? "translate-x-0 opacity-100"
               : "translate-x-6 pointer-events-none opacity-0"
@@ -483,12 +483,6 @@ export default function AuthPage({ initialMode = "login" }) {
         </div>
       </div>
 
-      <div className="mt-4 text-xs text-slate-400">
-        Тестовый админ:{" "}
-        <span className="font-medium text-slate-600">
-          пароль admin12345
-        </span>
-      </div>
     </AuthLayout>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../api/client.js";
 import ProfileBookingsTab from "../components/ProfileBookingsTab.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -203,7 +203,7 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div>
         <div>
           <div className="admin-chip">Профиль</div>
           <h1 className="mt-4 text-3xl font-bold text-slate-900 md:text-4xl">
@@ -212,21 +212,6 @@ export default function ProfilePage() {
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
             Здесь можно обновить личные данные аккаунта и быстро посмотреть ключевую сводку по активности.
           </p>
-        </div>
-
-        <div className="flex flex-wrap gap-3">
-          {isAdmin ? (
-            <Link className="admin-primary" to="/admin">
-              Открыть админку
-            </Link>
-          ) : (
-            <button className="admin-primary" onClick={() => setTab("bookings")} type="button">
-              Мои записи
-            </button>
-          )}
-          <Link className="admin-secondary" to="/services">
-            Каталог услуг
-          </Link>
         </div>
       </div>
 

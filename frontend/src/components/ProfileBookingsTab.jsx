@@ -15,6 +15,20 @@ function todayString() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function CalendarIcon() {
+  return (
+    <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24">
+      <path
+        d="M7 3v4M17 3v4M4 9h16M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+    </svg>
+  );
+}
+
 export default function ProfileBookingsTab() {
   const [bookings, setBookings] = useState([]);
   const [editing, setEditing] = useState(null);
@@ -131,31 +145,50 @@ export default function ProfileBookingsTab() {
                   className="mt-5"
                   open={isEditingCurrent && canManageBooking(booking.status)}
                 >
-                  <div className="grid gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-3">
-                    <input
-                      className="field"
-                      min={todayString()}
-                      onChange={(event) => updateDate(event.target.value)}
-                      type="date"
-                      value={editorDate}
-                    />
-                    <select
-                      className="field"
-                      onChange={(event) =>
-                        setEditing((current) => ({
-                          ...current,
-                          time: event.target.value
-                        }))
-                      }
-                      value={editorTime}
-                    >
-                      <option value="">Выберите слот</option>
-                      {slots.map((slot) => (
-                        <option key={slot} value={slot}>
-                          {slot}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="space-y-4 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                    <label className="block">
+                      <span className="ui-label">Новая дата</span>
+                      <div className="ui-field-wrap">
+                        <input
+                          className="ui-date-field"
+                          min={todayString()}
+                          onChange={(event) => updateDate(event.target.value)}
+                          type="date"
+                          value={editorDate}
+                        />
+                        <span className="ui-field-icon">
+                          <CalendarIcon />
+                        </span>
+                      </div>
+                    </label>
+                    <div>
+                      <div className="ui-label">Свободные слоты</div>
+                      {slots.length ? (
+                        <div className="ui-slot-grid">
+                          {slots.map((slot) => (
+                            <button
+                              key={slot}
+                              className={`ui-slot-button ${
+                                editorTime === slot ? "ui-slot-button-active" : ""
+                              }`}
+                              onClick={() =>
+                                setEditing((current) => ({
+                                  ...current,
+                                  time: slot
+                                }))
+                              }
+                              type="button"
+                            >
+                              {slot}
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="ui-slot-button ui-slot-button-disabled w-full justify-center">
+                          Свободные слоты не найдены
+                        </div>
+                      )}
+                    </div>
                     <button
                       className="admin-primary"
                       disabled={!editorTime}

@@ -17,11 +17,11 @@ export default function AuthInput({
         <span className="text-sm font-semibold text-slate-700">{label}</span>
         {hint}
       </div>
-      <div className="flex items-center rounded-2xl border border-slate-200 bg-white px-4 py-3 transition focus-within:border-violet-400 focus-within:ring-4 focus-within:ring-violet-100">
+      <div className="ui-input-shell">
         {icon && <span className="mr-3 text-slate-400">{icon}</span>}
         <input
           autoComplete={autoComplete}
-          className="w-full border-0 bg-transparent p-0 text-sm text-slate-900 outline-none placeholder:text-slate-400"
+          className=""
           name={name}
           onChange={onChange}
           placeholder={placeholder}
