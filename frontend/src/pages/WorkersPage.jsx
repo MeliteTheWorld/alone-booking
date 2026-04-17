@@ -134,8 +134,8 @@ export default function WorkersPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <section className="admin-card p-5 md:p-6">
+    <div className="space-y-5 md:space-y-6">
+      <section className="admin-card p-4 sm:p-5 md:p-6">
         <div className="ui-section-header">
           <div className="ui-section-copy">
             <div className="admin-chip">Работники</div>
@@ -184,7 +184,7 @@ export default function WorkersPage() {
 
       <section className="grid gap-4 xl:grid-cols-2">
         {workers.map((worker) => (
-          <article key={worker.id} className="admin-card p-5">
+          <article key={worker.id} className="admin-card p-4 sm:p-5">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <h2 className="text-2xl font-bold text-slate-900">{worker.full_name}</h2>

@@ -171,7 +171,7 @@ const roadmap = [
 ];
 
 const sectionSurfaceClass =
-  "surface overflow-hidden px-6 py-8 md:px-8 md:py-10";
+  "surface overflow-hidden px-4 py-6 sm:px-5 sm:py-7 md:px-8 md:py-10";
 
 const subCardClass =
   "rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_16px_34px_rgba(15,23,42,0.05)]";
@@ -299,20 +299,20 @@ export default function HomePage() {
 
   return (
     <div className="space-y-10 md:space-y-12 xl:space-y-14">
-      <section className="surface overflow-hidden px-6 py-8 md:px-8 md:py-10 xl:px-12 xl:py-12">
-        <div className="grid gap-10 xl:grid-cols-[minmax(0,1.08fr)_420px] xl:items-center">
+      <section className="surface overflow-hidden px-4 py-6 sm:px-5 sm:py-7 md:px-8 md:py-10 xl:px-12 xl:py-12">
+        <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_420px] xl:items-center">
           <div className="max-w-3xl">
             <div className="chip">ПРЕЗЕНТАЦИЯ ПРОЕКТА</div>
 
-            <h1 className="mt-6 max-w-3xl text-4xl font-extrabold leading-[0.98] text-slate-900 md:text-5xl xl:text-[4.3rem]">
+            <h1 className="mt-5 max-w-3xl text-3xl font-extrabold leading-[0.98] text-slate-900 sm:text-4xl md:mt-6 md:text-5xl xl:text-[4.3rem]">
               ALONE — веб-система онлайн-записи и управления услугами
             </h1>
 
-            <p className="mt-6 max-w-2xl text-base leading-8 text-slate-500 md:text-lg">
+            <p className="mt-5 max-w-2xl text-sm leading-7 text-slate-500 sm:text-base sm:leading-8 md:mt-6 md:text-lg">
               ALONE — это веб-система, которая помогает бизнесу работать быстрее, а клиентам — записываться за пару кликов.
             </p>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row">
               <Link className="btn-primary min-w-[190px]" to="/services">
                 Посмотреть продукт
               </Link>

@@ -217,7 +217,7 @@ export default function BookingPage() {
 
   return (
     <div className="space-y-6">
-      <section className="surface p-6 md:p-8 xl:p-10">
+      <section className="surface p-4 sm:p-5 md:p-8 xl:p-10">
         <div className="chip">Онлайн-запись</div>
         <h1 className="mt-4 font-display text-3xl font-bold text-slate-900 md:text-4xl">
           Записаться на услугу
@@ -236,7 +236,7 @@ export default function BookingPage() {
           </div>
         )}
 
-        <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_360px]">
+        <div className="mt-6 grid gap-5 lg:mt-8 lg:gap-6 xl:grid-cols-[minmax(0,1.2fr)_360px]">
           <form className="space-y-5" onSubmit={handleSubmit}>
             <div className="grid gap-5 lg:grid-cols-2">
               <SelectField
@@ -319,8 +319,8 @@ export default function BookingPage() {
 
               <div className="mt-4">
                 {slots.length ? (
-                  <div className="ui-slot-grid">
-                    {slots.map((slot) => (
+                    <div className="ui-slot-grid">
+                      {slots.map((slot) => (
                       <button
                         key={slot}
                         className={`ui-slot-button ${
@@ -361,7 +361,7 @@ export default function BookingPage() {
           </form>
 
           <div className="space-y-5">
-            <section className="rounded-[28px] border border-slate-200 bg-slate-50 p-5 md:p-6">
+            <section className="rounded-[28px] border border-slate-200 bg-slate-50 p-4 sm:p-5 md:p-6">
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-600">
                 Сводка визита
               </div>
@@ -423,7 +423,7 @@ export default function BookingPage() {
               )}
             </section>
 
-            <section className="rounded-[28px] border border-slate-200 bg-white p-5 md:p-6">
+            <section className="rounded-[28px] border border-slate-200 bg-white p-4 sm:p-5 md:p-6">
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-600">
                 Что дальше
               </div>

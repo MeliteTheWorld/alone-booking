@@ -159,7 +159,7 @@ export default function AdminDashboardPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 md:space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="admin-chip">Обзор бизнеса</div>
@@ -171,11 +171,11 @@ export default function AdminDashboardPage() {
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-3">
-          <Link className="admin-secondary" to="/admin?tab=calendar">
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+          <Link className="admin-secondary w-full sm:w-auto" to="/admin?tab=calendar">
             Полный календарь
           </Link>
-          <Link className="admin-primary" to="/admin?tab=services">
+          <Link className="admin-primary w-full sm:w-auto" to="/admin?tab=services">
             Управление услугами
           </Link>
         </div>
@@ -193,7 +193,7 @@ export default function AdminDashboardPage() {
       )}
 
       {summary && (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-4">
           {statsConfig.map((item, index) => (
             <div className="admin-card p-5" key={item.key}>
               <div className="flex items-start justify-between gap-4">
@@ -215,9 +215,9 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_320px]">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_320px]">
         <section className="admin-card overflow-hidden">
-          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 px-5 py-5 md:px-6">
+          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 px-4 py-4 sm:px-5 md:px-6 md:py-5">
             <div>
               <h2 className="text-2xl font-bold text-slate-900">Ближайшие записи</h2>
               <p className="mt-1 text-sm text-slate-500">
@@ -230,10 +230,10 @@ export default function AdminDashboardPage() {
           </div>
 
           {actionableBookings.length ? (
-            <div className="grid gap-4 p-4 md:p-5 xl:grid-cols-1">
+            <div className="grid gap-4 p-3 sm:p-4 md:p-5 xl:grid-cols-1">
               {actionableBookings.map((booking) => (
                 <div
-                  className="rounded-[28px] border border-slate-200 bg-white p-5 md:p-6"
+                  className="rounded-[28px] border border-slate-200 bg-white p-4 sm:p-5 md:p-6"
                   key={booking.id}
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
@@ -241,14 +241,17 @@ export default function AdminDashboardPage() {
                       <div className="text-xl font-bold leading-tight text-slate-900 md:text-2xl">
                         {booking.service_name}
                       </div>
-                      <div className="mt-2 text-sm text-slate-500">
+                      <div className="mt-2 text-sm text-slate-500 sm:hidden">
+                        Приоритетная запись
+                      </div>
+                      <div className="mt-2 hidden text-sm text-slate-500 sm:block">
                         Ближайшая запись клиента в работе администратора
                       </div>
                     </div>
                     <BookingStatusBadge status={booking.status} />
                   </div>
 
-                  <div className="mt-5 grid gap-3 md:grid-cols-3">
+                  <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
                       <div className="text-xs uppercase tracking-[0.14em] text-slate-400">
                         Клиент
@@ -308,7 +311,7 @@ export default function AdminDashboardPage() {
         </section>
 
         <div className="space-y-6">
-          <section className="admin-card p-5">
+          <section className="admin-card p-4 sm:p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-xl font-bold text-slate-900">Текущий месяц</h2>
@@ -350,7 +353,7 @@ export default function AdminDashboardPage() {
             </div>
           </section>
 
-          <section className="admin-card p-5">
+          <section className="admin-card p-4 sm:p-5">
             <h2 className="text-xl font-bold text-slate-900">Загрузка на неделю</h2>
             <div className="mt-5 space-y-4">
               {load.map((day) => (
@@ -377,7 +380,7 @@ export default function AdminDashboardPage() {
             </div>
           </section>
 
-          <section className="admin-card p-5">
+          <section className="admin-card p-4 sm:p-5">
             <h2 className="text-xl font-bold text-slate-900">Требуют внимания</h2>
             <div className="mt-4 space-y-3">
               {upcomingBookings.slice(0, 4).map((booking) => (

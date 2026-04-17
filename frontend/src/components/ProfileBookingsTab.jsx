@@ -146,7 +146,7 @@ export default function ProfileBookingsTab() {
           const stateNote = getStateNote(booking.status);
 
           return (
-            <article key={booking.id} className="admin-card p-5 md:p-6">
+            <article key={booking.id} className="admin-card p-4 sm:p-5 md:p-6">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-3">
@@ -156,7 +156,7 @@ export default function ProfileBookingsTab() {
                     <BookingStatusBadge status={booking.status} />
                   </div>
 
-                  <div className="mt-4 grid gap-2 text-sm text-slate-500 md:grid-cols-2">
+                  <div className="mt-4 grid gap-2 text-sm text-slate-500 lg:grid-cols-2">
                     <div>
                       <span className="font-semibold text-slate-700">Дата и время:</span>{" "}
                       {formatDate(booking.booking_date)} в {booking.booking_time.slice(0, 5)}

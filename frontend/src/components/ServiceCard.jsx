@@ -81,17 +81,17 @@ export default function ServiceCard({ service }) {
       : "disabled";
 
   return (
-    <article className="ui-card flex h-full flex-col p-8">
-      <div className="min-h-[126px]">
+    <article className="ui-card flex h-full flex-col p-5 sm:p-6 lg:p-8">
+      <div className="min-h-[auto] sm:min-h-[118px] lg:min-h-[126px]">
         <h3 className="text-[1.18rem] font-bold leading-tight text-slate-950 sm:text-[1.28rem]">
           {service.name}
         </h3>
-        <p className="mt-4 min-h-[52px] text-[14px] leading-7 text-slate-500">
+        <p className="mt-3 min-h-[auto] text-[14px] leading-7 text-slate-500 sm:mt-4 sm:min-h-[52px]">
           {service.description || "Описание услуги пока не добавлено."}
         </p>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-3 text-[14px] text-slate-400">
+      <div className="mt-3 flex flex-wrap items-center gap-2.5 text-[13px] text-slate-400 sm:mt-4 sm:gap-3 sm:text-[14px]">
         <div className="inline-flex items-center gap-2">
           <ClockIcon />
           <span>{service.duration} минут</span>
@@ -105,21 +105,23 @@ export default function ServiceCard({ service }) {
         <span>{getWorkerSummary(workers, isAdmin)}</span>
       </div>
 
-      <div className="mt-auto pt-10">
-        <div className="mb-6 text-[2rem] font-semibold leading-none text-slate-950">
-          {Number(service.price).toLocaleString("ru-RU")} ₽
-        </div>
+      <div className="mt-auto pt-7 sm:pt-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-[1.75rem] font-semibold leading-none text-slate-950 sm:text-[2rem]">
+            {Number(service.price).toLocaleString("ru-RU")} ₽
+          </div>
 
-        <Button
-          className="w-full"
-          disabled={!hasWorkers && !isAdmin}
-          size="lg"
-          to={hasWorkers || isAdmin ? actionTo : undefined}
-          type="button"
-          variant={actionVariant}
-        >
-          {actionLabel}
-        </Button>
+          <Button
+            className="w-full sm:w-auto sm:min-w-[170px]"
+            disabled={!hasWorkers && !isAdmin}
+            size="lg"
+            to={hasWorkers || isAdmin ? actionTo : undefined}
+            type="button"
+            variant={actionVariant}
+          >
+            {actionLabel}
+          </Button>
+        </div>
       </div>
     </article>
   );

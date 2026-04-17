@@ -244,7 +244,7 @@ export default function ProfilePage() {
       {error && <div className="ui-alert-error">{error}</div>}
       {message && <div className="ui-alert-info">{message}</div>}
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-4">
         {stats.map((item) => (
           <div className="admin-card p-5" key={item.label}>
             <div className="text-sm font-medium text-slate-500">{item.label}</div>
@@ -256,14 +256,14 @@ export default function ProfilePage() {
         ))}
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
+      <div className="grid gap-5 xl:grid-cols-[280px_minmax(0,1fr)]">
         <aside className="space-y-6">
           <section className="admin-card p-4">
-            <nav className="grid gap-2">
+            <nav className="flex gap-2 overflow-x-auto pb-1 xl:grid xl:overflow-visible xl:pb-0">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
-                  className={`admin-sidebar-link w-full justify-between ${
+                  className={`admin-sidebar-link min-w-[170px] justify-between xl:w-full ${
                     activeTab === tab.id ? "admin-sidebar-link-active" : ""
                   }`}
                   onClick={() => setTab(tab.id)}
@@ -278,7 +278,7 @@ export default function ProfilePage() {
             </nav>
           </section>
 
-          <section className="admin-card p-6">
+          <section className="admin-card p-5 sm:p-6">
             <div className="flex flex-col items-center text-center">
               <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-violet-100 text-3xl font-bold text-violet-700">
                 {selectedAvatar ? (
@@ -317,7 +317,7 @@ export default function ProfilePage() {
             </div>
           </section>
 
-          <section className="admin-card p-6">
+          <section className="admin-card p-5 sm:p-6">
             <h2 className="text-xl font-bold text-slate-900">Недавняя активность</h2>
             <div className="mt-4 space-y-3">
               {recentItems.length ? (
@@ -336,7 +336,7 @@ export default function ProfilePage() {
           </section>
         </aside>
 
-        <section className="admin-card p-6 md:p-8">
+        <section className="admin-card p-4 sm:p-5 md:p-8">
           {activeTab === "bookings" ? (
             <>
               <div>

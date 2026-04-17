@@ -162,8 +162,8 @@ export default function ManageServicesPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <section className="admin-card p-5 md:p-6">
+    <div className="space-y-5 md:space-y-6">
+      <section className="admin-card p-4 sm:p-5 md:p-6">
         <div className="ui-section-header">
           <div className="ui-section-copy">
             <div className="admin-chip">Услуги</div>
@@ -212,7 +212,7 @@ export default function ManageServicesPage() {
 
       <section className="grid gap-4 xl:grid-cols-2">
         {services.map((service) => (
-          <article key={service.id} className="admin-card p-5">
+          <article key={service.id} className="admin-card p-4 sm:p-5">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-4">

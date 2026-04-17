@@ -36,7 +36,7 @@ export default function Modal({
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/30 p-4 backdrop-blur-[2px]">
+    <div className="fixed inset-0 z-[120] flex items-end justify-center bg-slate-950/30 p-3 backdrop-blur-[2px] sm:items-center sm:p-4">
       <button
         aria-label="Закрыть окно"
         className="absolute inset-0 cursor-default"
@@ -47,7 +47,7 @@ export default function Modal({
         className={`relative z-[1] w-full ${widthClassName} overflow-hidden rounded-[28px] border bg-white shadow-[0_24px_80px_rgba(15,23,42,0.18)]`}
         style={{ borderColor: "var(--ui-border)" }}
       >
-        <div className="border-b px-5 py-4 md:px-6" style={{ borderColor: "var(--ui-border)" }}>
+        <div className="border-b px-4 py-4 sm:px-5 md:px-6" style={{ borderColor: "var(--ui-border)" }}>
           <div className="text-xl font-bold text-slate-950">{title}</div>
           {description && (
             <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p>
@@ -55,12 +55,12 @@ export default function Modal({
         </div>
 
         {children ? (
-          <div className="max-h-[70vh] overflow-y-auto px-5 py-5 md:px-6">{children}</div>
+          <div className="max-h-[78vh] overflow-y-auto px-4 py-4 sm:max-h-[70vh] sm:px-5 sm:py-5 md:px-6">{children}</div>
         ) : null}
 
         {footer && (
           <div
-            className="flex flex-wrap justify-end gap-3 border-t bg-slate-50 px-5 py-4 md:px-6"
+            className="flex flex-col-reverse gap-3 border-t bg-slate-50 px-4 py-4 sm:flex-row sm:flex-wrap sm:justify-end sm:px-5 md:px-6"
             style={{ borderColor: "var(--ui-border)" }}
           >
             {footer}

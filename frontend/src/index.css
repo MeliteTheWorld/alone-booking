@@ -288,8 +288,14 @@ main {
   }
 
   .ui-btn-lg {
-    @apply px-6 py-3.5 text-[15px];
-    min-height: 54px;
+    @apply px-5 py-3 text-[15px] sm:px-6 sm:py-3.5;
+    min-height: 50px;
+  }
+
+  @screen sm {
+    .ui-btn-lg {
+      min-height: 54px;
+    }
   }
 
   .ui-btn-primary {
@@ -443,6 +449,13 @@ main {
 
   .admin-sidebar-link-active {
     @apply bg-violet-50 text-violet-700;
+  }
+
+  @media (max-width: 767px) {
+    .admin-sidebar-link {
+      min-height: 46px;
+      white-space: nowrap;
+    }
   }
 
   .ui-link {

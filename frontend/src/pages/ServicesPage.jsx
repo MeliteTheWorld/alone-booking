@@ -84,7 +84,7 @@ export default function ServicesPage() {
 
   return (
     <div className="space-y-8 md:space-y-10">
-      <section className="surface p-5 md:p-8">
+      <section className="surface p-4 sm:p-5 md:p-8">
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-end">
           <div>
             <div className="chip">Каталог услуг</div>
@@ -115,7 +115,7 @@ export default function ServicesPage() {
           </label>
         </div>
 
-        <div className="mt-5 rounded-[22px] border border-slate-200 bg-slate-50 p-3">
+        <div className="mt-4 rounded-[22px] border border-slate-200 bg-slate-50 p-2.5 sm:mt-5 sm:p-3">
           <div className="ui-tab-group">
             {filterOptions.map((option) => {
               const isActive = activeFilter === option.value;
@@ -148,7 +148,7 @@ export default function ServicesPage() {
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
         {filteredServices.map((service) => (
           <ServiceCard key={service.id} service={service} />
         ))}
