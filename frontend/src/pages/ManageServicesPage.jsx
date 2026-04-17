@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/client.js";
+import Button from "../components/Button.jsx";
 import Modal from "../components/Modal.jsx";
 import { useConfirmDialog } from "../context/ConfirmDialogContext.jsx";
 
@@ -163,63 +164,50 @@ export default function ManageServicesPage() {
   return (
     <div className="space-y-6">
       <section className="admin-card p-5 md:p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
+        <div className="ui-section-header">
+          <div className="ui-section-copy">
             <div className="admin-chip">Услуги</div>
-            <h1 className="mt-3 text-3xl font-bold text-slate-900">
-              Управление услугами
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+            <h1 className="ui-section-title">Управление услугами</h1>
+            <p className="ui-section-description">
               Добавляйте новые позиции, быстро редактируйте стоимость, длительность
               и назначайте сотрудника через отдельное окно без перегруженной страницы.
             </p>
           </div>
 
-          <button
-            className="inline-flex w-full items-center justify-center gap-2 rounded-[22px] bg-[linear-gradient(135deg,#7c4ee4_0%,#8e63f5_100%)] px-5 py-3.5 text-sm font-bold text-white shadow-[0_16px_34px_rgba(124,78,228,0.24)] lg:w-auto"
+          <Button
+            className="lg:w-auto"
+            fullWidth
+            icon={
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/20 text-base leading-none">
+                +
+              </span>
+            }
             onClick={openCreateModal}
             type="button"
+            variant="primary"
+            size="lg"
           >
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/20 text-base leading-none">
-              +
-            </span>
             Новая услуга
-          </button>
+          </Button>
         </div>
 
         <div className="mt-5 grid gap-3 md:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-            <div className="text-xs uppercase tracking-[0.16em] text-slate-400">
-              Активных услуг
-            </div>
-            <div className="mt-2 text-2xl font-bold text-slate-900">{activeCount}</div>
+          <div className="ui-stat-card">
+            <div className="ui-stat-label">Активных услуг</div>
+            <div className="ui-stat-value">{activeCount}</div>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-            <div className="text-xs uppercase tracking-[0.16em] text-slate-400">
-              Назначено сотрудникам
-            </div>
-            <div className="mt-2 text-2xl font-bold text-slate-900">{assignedCount}</div>
+          <div className="ui-stat-card">
+            <div className="ui-stat-label">Назначено сотрудникам</div>
+            <div className="ui-stat-value">{assignedCount}</div>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-            <div className="text-xs uppercase tracking-[0.16em] text-slate-400">
-              Средняя длительность
-            </div>
-            <div className="mt-2 text-2xl font-bold text-slate-900">
-              {averageDuration ? `${averageDuration} мин` : "—"}
-            </div>
+          <div className="ui-stat-card">
+            <div className="ui-stat-label">Средняя длительность</div>
+            <div className="ui-stat-value">{averageDuration ? `${averageDuration} мин` : "—"}</div>
           </div>
         </div>
 
-        {error && (
-          <div className="mt-4 rounded-2xl border border-fuchsia-200 bg-fuchsia-50 px-4 py-3 text-sm text-fuchsia-700">
-            {error}
-          </div>
-        )}
-        {message && (
-          <div className="mt-4 rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-700">
-            {message}
-          </div>
-        )}
+        {error && <div className="ui-alert-error mt-4">{error}</div>}
+        {message && <div className="ui-alert-info mt-4">{message}</div>}
       </section>
 
       <section className="grid gap-4 xl:grid-cols-2">
@@ -273,7 +261,7 @@ export default function ManageServicesPage() {
               </div>
             </div>
 
-            <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5">
+            <div className="ui-card-muted mt-4 px-4 py-3.5">
               <div className="text-xs uppercase tracking-[0.14em] text-slate-400">
                 Описание услуги
               </div>
@@ -282,7 +270,7 @@ export default function ManageServicesPage() {
               </p>
             </div>
 
-            <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5">
+            <div className="ui-card-muted mt-4 px-4 py-3.5">
               <div className="text-xs uppercase tracking-[0.14em] text-slate-400">
                 Исполнители
               </div>
@@ -297,20 +285,24 @@ export default function ManageServicesPage() {
             </div>
 
             <div className="mt-4 flex w-full gap-2">
-                <button
-                  className="inline-flex min-h-[42px] flex-1 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
+                <Button
+                  className="flex-1"
                   onClick={() => openEditModal(service)}
                   type="button"
+                  variant="secondary"
+                  size="sm"
                 >
                   Редактировать
-                </button>
-                <button
-                  className="inline-flex min-h-[42px] flex-1 items-center justify-center rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600"
+                </Button>
+                <Button
+                  className="flex-1"
                   onClick={() => handleDelete(service)}
                   type="button"
+                  variant="danger"
+                  size="sm"
                 >
                   Удалить
-                </button>
+                </Button>
             </div>
           </article>
         ))}
@@ -333,21 +325,18 @@ export default function ManageServicesPage() {
         title={form.id ? "Редактировать услугу" : "Новая услуга"}
         footer={
           <>
-            <button className="admin-secondary" onClick={closeModal} type="button">
+            <Button onClick={closeModal} type="button" variant="secondary">
               Отмена
-            </button>
-            <button
-              className="admin-primary"
+            </Button>
+            <Button
               form="service-form"
               type="submit"
               disabled={submitting}
+              loading={submitting}
+              variant="primary"
             >
-              {submitting
-                ? "Сохраняем..."
-                : form.id
-                  ? "Сохранить услугу"
-                  : "Создать услугу"}
-            </button>
+              {form.id ? "Сохранить услугу" : "Создать услугу"}
+            </Button>
           </>
         }
       >
@@ -367,7 +356,7 @@ export default function ManageServicesPage() {
           <label className="block">
             <span className="ui-label">Комментарий</span>
             <textarea
-              className="admin-input min-h-28"
+              className="ui-textarea min-h-28"
               name="description"
               onChange={handleChange}
               placeholder="Коротко опишите, что входит в услугу"
@@ -399,7 +388,7 @@ export default function ManageServicesPage() {
                 return (
                   <label
                     key={worker.id}
-                    className={`flex cursor-pointer items-start gap-3 rounded-2xl border px-4 py-3 ${
+                    className={`flex cursor-pointer items-start gap-3 rounded-2xl border px-4 py-3 transition-colors ${
                       checked
                         ? "border-violet-200 bg-violet-50"
                         : "border-slate-200 bg-slate-50"
@@ -423,7 +412,7 @@ export default function ManageServicesPage() {
               })}
             </div>
             {!workers.length && (
-              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+              <div className="ui-alert border-dashed border-slate-200 bg-slate-50 text-slate-500">
                 Сначала добавьте работников во вкладке «Работники».
               </div>
             )}
@@ -443,7 +432,7 @@ export default function ManageServicesPage() {
               />
             </label>
 
-            <label className="flex h-full items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
+            <label className="ui-card-muted flex h-full items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700">
               <input
                 checked={form.is_active}
                 name="is_active"
@@ -454,11 +443,7 @@ export default function ManageServicesPage() {
             </label>
           </div>
 
-          {modalError && (
-            <div className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 px-4 py-3 text-sm text-fuchsia-700">
-              {modalError}
-            </div>
-          )}
+          {modalError && <div className="ui-alert-error">{modalError}</div>}
         </form>
       </Modal>
     </div>

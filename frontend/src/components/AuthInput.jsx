@@ -14,7 +14,7 @@ export default function AuthInput({
   return (
     <label className="block">
       <div className="mb-2 flex items-center justify-between gap-3">
-        <span className="text-sm font-semibold text-slate-700">{label}</span>
+        <span className="ui-label mb-0">{label}</span>
         {hint}
       </div>
       <div className="ui-input-shell">

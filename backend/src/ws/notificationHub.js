@@ -85,3 +85,37 @@ export function broadcastNotificationsReadAll(userId, readAt) {
     });
   }
 }
+
+export function broadcastNotificationDeleted(userId, notificationId) {
+  const connections = userConnections.get(String(userId));
+
+  if (!connections?.size) {
+    return;
+  }
+
+  for (const socket of connections) {
+    send(socket, {
+      type: "notification.deleted",
+      payload: {
+        id: Number(notificationId)
+      }
+    });
+  }
+}
+
+export function broadcastNotificationsCleared(userId) {
+  const connections = userConnections.get(String(userId));
+
+  if (!connections?.size) {
+    return;
+  }
+
+  for (const socket of connections) {
+    send(socket, {
+      type: "notifications.cleared",
+      payload: {
+        user_id: Number(userId)
+      }
+    });
+  }
+}

@@ -119,7 +119,7 @@ export default function AdminPage() {
     <div className="admin-shell">
       <div className="md:grid md:grid-cols-[280px_minmax(0,1fr)]">
         <aside className="border-b border-slate-200 bg-white md:min-h-[calc(100vh-180px)] md:border-b-0 md:border-r">
-          <div className="p-4 md:p-5">
+          <div className="p-3 sm:p-4 md:p-5">
             <div className="hidden md:block">
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-600">
                 Панель управления
@@ -145,14 +145,14 @@ export default function AdminPage() {
               </div>
             </div>
 
-            <nav className="mt-4 grid gap-2 md:mt-8">
+            <nav className="mt-4 flex gap-2 overflow-x-auto pb-1 md:mt-8 md:grid md:gap-2 md:overflow-visible md:pb-0">
               {tabs.map((tab) => {
                 const isActive = activeTab === tab.id;
 
                 return (
                   <button
                     key={tab.id}
-                    className={`admin-sidebar-link w-full ${
+                    className={`admin-sidebar-link shrink-0 md:w-full ${
                       isActive ? "admin-sidebar-link-active" : ""
                     }`}
                     onClick={() => setTab(tab.id)}
@@ -162,7 +162,7 @@ export default function AdminPage() {
                       {tab.icon}
                       <span className="min-w-0 text-left">
                         <span className="block">{tab.label}</span>
-                        <span className="mt-1 block text-xs font-medium text-slate-400">
+                        <span className="mt-1 hidden text-xs font-medium text-slate-400 md:block">
                           {tab.helper}
                         </span>
                       </span>
@@ -184,7 +184,7 @@ export default function AdminPage() {
           </div>
         </aside>
 
-        <section className="min-w-0 bg-[#f7f8fc] p-4 md:p-6 xl:p-8">
+        <section className="min-w-0 bg-[#f7f8fc] p-3 sm:p-4 md:p-6 xl:p-8">
           <div className="mb-6 hidden items-center justify-between border-b border-slate-200 pb-5 md:flex">
             <div>
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-600">

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../api/client.js";
+import Button from "../components/Button.jsx";
 import ProfileBookingsTab from "../components/ProfileBookingsTab.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useConfirmDialog } from "../context/ConfirmDialogContext.jsx";
@@ -240,16 +241,8 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {error && (
-        <div className="admin-card border-fuchsia-200 bg-fuchsia-50 px-5 py-4 text-sm text-fuchsia-700">
-          {error}
-        </div>
-      )}
-      {message && (
-        <div className="admin-card border-violet-200 bg-violet-50 px-5 py-4 text-sm text-violet-700">
-          {message}
-        </div>
-      )}
+      {error && <div className="ui-alert-error">{error}</div>}
+      {message && <div className="ui-alert-info">{message}</div>}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {stats.map((item) => (
@@ -329,13 +322,13 @@ export default function ProfilePage() {
             <div className="mt-4 space-y-3">
               {recentItems.length ? (
                 recentItems.map((item) => (
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3" key={`${item.label}-${item.value}`}>
+                  <div className="ui-card-muted px-4 py-3" key={`${item.label}-${item.value}`}>
                     <div className="font-semibold text-slate-900">{item.label}</div>
                     <div className="mt-1 text-sm text-slate-500">{item.value}</div>
                   </div>
                 ))
               ) : (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-500">
+                <div className="ui-alert border-slate-200 bg-slate-50 text-slate-500">
                   Пока нет данных для отображения.
                 </div>
               )}
@@ -412,10 +405,10 @@ export default function ProfilePage() {
 
                       return (
                         <button
-                          className={`rounded-[24px] border px-4 py-4 text-left ${
+                          className={`w-full rounded-[24px] border px-4 py-4 text-left transition-colors ${
                             isActive
                               ? "border-violet-300 bg-violet-50"
-                              : "border-slate-200 bg-white"
+                              : "border-slate-200 bg-white hover:bg-slate-50"
                           }`}
                           key={avatar.key}
                           onClick={() =>
@@ -489,15 +482,15 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                  <button
-                    className="admin-primary"
+                  <Button
                     disabled={saving}
                     type="submit"
+                    loading={saving}
+                    variant="primary"
                   >
-                    {saving ? "Сохраняем..." : "Сохранить изменения"}
-                  </button>
-                  <button
-                    className="admin-secondary"
+                    Сохранить изменения
+                  </Button>
+                  <Button
                     onClick={() => {
                       setForm({
                         name: profile?.name || user?.name || "",
@@ -509,9 +502,10 @@ export default function ProfilePage() {
                       setMessage("");
                     }}
                     type="button"
+                    variant="secondary"
                   >
                     Сбросить
-                  </button>
+                  </Button>
                 </div>
               </form>
             </>

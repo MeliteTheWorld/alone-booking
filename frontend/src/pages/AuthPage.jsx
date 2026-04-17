@@ -2,6 +2,7 @@ import { startTransition, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import AuthInput from "../components/AuthInput.jsx";
 import AuthLayout from "../components/AuthLayout.jsx";
+import Button from "../components/Button.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 
 function normalizeMode(mode) {
@@ -204,24 +205,16 @@ export default function AuthPage({ initialMode = "login" }) {
     <AuthLayout
       cardAction={
         adminAccess ? null : (
-          <div className="inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1">
+          <div className="ui-tab-group rounded-2xl border border-slate-200 bg-slate-50 p-1.5">
             <button
-              className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
-                isLogin
-                  ? "bg-[#8e63f5] text-white"
-                  : "text-slate-500 hover:text-slate-900"
-              }`}
+              className={isLogin ? "ui-tab ui-tab-active" : "ui-tab"}
               onClick={() => switchMode("login")}
               type="button"
             >
               Вход
             </button>
             <button
-              className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
-                !isLogin
-                  ? "bg-[#8e63f5] text-white"
-                  : "text-slate-500 hover:text-slate-900"
-              }`}
+              className={!isLogin ? "ui-tab ui-tab-active" : "ui-tab"}
               onClick={() => switchMode("register")}
               type="button"
             >
@@ -236,7 +229,7 @@ export default function AuthPage({ initialMode = "login" }) {
           <>
             Нет аккаунта?{" "}
             <button
-              className="font-semibold text-violet-600 hover:text-violet-700"
+              className="ui-text-link"
               onClick={() => switchMode("register")}
               type="button"
             >
@@ -247,7 +240,7 @@ export default function AuthPage({ initialMode = "login" }) {
           <>
             Уже есть аккаунт?{" "}
             <button
-              className="font-semibold text-violet-600 hover:text-violet-700"
+              className="ui-text-link"
               onClick={() => switchMode("login")}
               type="button"
             >
@@ -274,7 +267,7 @@ export default function AuthPage({ initialMode = "login" }) {
           className={`absolute inset-0 ${
             isLogin
               ? "translate-x-0 opacity-100"
-              : "-translate-x-6 pointer-events-noneц opacity-0"
+              : "-translate-x-6 pointer-events-none opacity-0"
           }`}
         >
           <form className="space-y-5" onSubmit={handleLoginSubmit}>
@@ -293,7 +286,7 @@ export default function AuthPage({ initialMode = "login" }) {
             )}
 
             {adminAccess && (
-              <div className="rounded-2xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-cyan-700">
+              <div className="ui-alert border-cyan-200 bg-cyan-50 text-cyan-700">
                 Используется встроенный логин администратора. Введите только пароль.
               </div>
             )}
@@ -340,15 +333,15 @@ export default function AuthPage({ initialMode = "login" }) {
             </label>
 
             {loginError && (
-              <div className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 px-4 py-3 text-sm text-fuchsia-700">
-                {loginError}
-              </div>
+              <div className="ui-alert-error">{loginError}</div>
             )}
 
-            <button
-              className="w-full rounded-2xl bg-[#8e63f5] px-5 py-3.5 font-semibold text-white transition hover:bg-[#7c4ee4]"
+            <Button
+              fullWidth
               disabled={submitting}
               type="submit"
+              variant="primary"
+              size="lg"
             >
               {submitting
                 ? adminAccess
@@ -357,16 +350,18 @@ export default function AuthPage({ initialMode = "login" }) {
                 : adminAccess
                   ? "Войти в админку"
                   : "Войти"}
-            </button>
+            </Button>
 
             {adminAccess && (
-              <button
-                className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-50"
+              <Button
+                fullWidth
                 onClick={disableAdminAccess}
                 type="button"
+                variant="secondary"
+                size="lg"
               >
                 Вернуться к обычному входу
-              </button>
+              </Button>
             )}
           </form>
 
@@ -378,28 +373,32 @@ export default function AuthPage({ initialMode = "login" }) {
                 <div className="h-px flex-1 bg-slate-200" />
               </div>
 
-              <button
-                className="inline-flex min-h-[58px] w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3.5 font-semibold text-slate-700 transition hover:bg-slate-50"
+              <Button
+                fullWidth
+                icon={
+                  <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <path
+                      d="M12 3 18 5v5c0 4-2.6 7.7-6 9-3.4-1.3-6-5-6-9V5l6-2Z"
+                      stroke="currentColor"
+                      strokeLinejoin="round"
+                      strokeWidth="1.8"
+                    />
+                    <path
+                      d="m9.5 11.7 1.7 1.8 3.3-3.5"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="1.8"
+                    />
+                  </svg>
+                }
                 onClick={enableAdminAccess}
                 type="button"
+                variant="secondary"
+                size="lg"
               >
-                <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24">
-                  <path
-                    d="M12 3 18 5v5c0 4-2.6 7.7-6 9-3.4-1.3-6-5-6-9V5l6-2Z"
-                    stroke="currentColor"
-                    strokeLinejoin="round"
-                    strokeWidth="1.8"
-                  />
-                  <path
-                    d="m9.5 11.7 1.7 1.8 3.3-3.5"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="1.8"
-                  />
-                </svg>
                 Вход для администратора
-              </button>
+              </Button>
             </>
           )}
         </div>
@@ -457,21 +456,21 @@ export default function AuthPage({ initialMode = "login" }) {
             />
 
             {registerError && (
-              <div className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 px-4 py-3 text-sm text-fuchsia-700">
-                {registerError}
-              </div>
+              <div className="ui-alert-error">{registerError}</div>
             )}
 
-            <button
-              className="w-full rounded-2xl bg-[#8e63f5] px-5 py-3.5 font-semibold text-white transition hover:bg-[#7c4ee4]"
+            <Button
+              fullWidth
               disabled={submitting}
               type="submit"
+              variant="primary"
+              size="lg"
             >
               {submitting ? "Создаём аккаунт..." : "Создать аккаунт"}
-            </button>
+            </Button>
           </form>
 
-          <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-500">
+          <div className="ui-alert mt-6 border-slate-200 bg-slate-50 text-slate-500">
             После регистрации клиент сразу получает доступ к бронированию,
             переносу и отмене своих записей.
           </div>

@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useState } from "react";
+import Button from "../components/Button.jsx";
 import Modal from "../components/Modal.jsx";
 
 const ConfirmDialogContext = createContext(null);
@@ -37,24 +38,20 @@ export function ConfirmDialogProvider({ children }) {
         description={dialog?.description}
         footer={
           <>
-            <button
-              className="admin-secondary min-w-[120px]"
+            <Button
+              className="min-w-[120px]"
               onClick={() => closeDialog(false)}
-              type="button"
+              variant="secondary"
             >
               {dialog?.cancelText || "Нет"}
-            </button>
-            <button
-              className={
-                dialog?.tone === "danger"
-                  ? "inline-flex min-w-[120px] items-center justify-center rounded-2xl bg-rose-600 px-5 py-3 font-semibold text-white"
-                  : "admin-primary min-w-[120px]"
-              }
+            </Button>
+            <Button
+              className="min-w-[120px]"
               onClick={() => closeDialog(true)}
-              type="button"
+              variant={dialog?.tone === "danger" ? "danger" : "primary"}
             >
               {dialog?.confirmText || "Да"}
-            </button>
+            </Button>
           </>
         }
         onClose={() => closeDialog(false)}

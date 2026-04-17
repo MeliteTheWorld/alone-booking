@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/client.js";
+import Button from "../components/Button.jsx";
 import Modal from "../components/Modal.jsx";
 import { useConfirmDialog } from "../context/ConfirmDialogContext.jsx";
 
@@ -135,59 +136,50 @@ export default function WorkersPage() {
   return (
     <div className="space-y-6">
       <section className="admin-card p-5 md:p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
+        <div className="ui-section-header">
+          <div className="ui-section-copy">
             <div className="admin-chip">Работники</div>
-            <h1 className="mt-3 text-3xl font-bold text-slate-900">Команда и роли</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+            <h1 className="ui-section-title">Команда и роли</h1>
+            <p className="ui-section-description">
               Управляйте списком сотрудников и выбирайте их прямо при создании услуг.
               После удаления работник автоматически снимается со всех услуг.
             </p>
           </div>
 
-          <button
-            className="inline-flex w-full items-center justify-center gap-2 rounded-[22px] bg-[linear-gradient(135deg,#7c4ee4_0%,#8e63f5_100%)] px-5 py-3.5 text-sm font-bold text-white shadow-[0_16px_34px_rgba(124,78,228,0.24)] lg:w-auto"
+          <Button
+            className="lg:w-auto"
+            fullWidth
+            icon={
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/20 text-base leading-none">
+                +
+              </span>
+            }
             onClick={openCreateModal}
             type="button"
+            variant="primary"
+            size="lg"
           >
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/20 text-base leading-none">
-              +
-            </span>
             Добавить работника
-          </button>
+          </Button>
         </div>
 
         <div className="mt-5 grid gap-3 md:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-            <div className="text-xs uppercase tracking-[0.16em] text-slate-400">
-              Всего работников
-            </div>
-            <div className="mt-2 text-2xl font-bold text-slate-900">{workers.length}</div>
+          <div className="ui-stat-card">
+            <div className="ui-stat-label">Всего работников</div>
+            <div className="ui-stat-value">{workers.length}</div>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-            <div className="text-xs uppercase tracking-[0.16em] text-slate-400">
-              Назначены в услуги
-            </div>
-            <div className="mt-2 text-2xl font-bold text-slate-900">{assignedWorkersCount}</div>
+          <div className="ui-stat-card">
+            <div className="ui-stat-label">Назначены в услуги</div>
+            <div className="ui-stat-value">{assignedWorkersCount}</div>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-            <div className="text-xs uppercase tracking-[0.16em] text-slate-400">
-              Уникальных ролей
-            </div>
-            <div className="mt-2 text-2xl font-bold text-slate-900">{uniquePositionsCount}</div>
+          <div className="ui-stat-card">
+            <div className="ui-stat-label">Уникальных ролей</div>
+            <div className="ui-stat-value">{uniquePositionsCount}</div>
           </div>
         </div>
 
-        {error && (
-          <div className="mt-4 rounded-2xl border border-fuchsia-200 bg-fuchsia-50 px-4 py-3 text-sm text-fuchsia-700">
-            {error}
-          </div>
-        )}
-        {message && (
-          <div className="mt-4 rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-700">
-            {message}
-          </div>
-        )}
+        {error && <div className="ui-alert-error mt-4">{error}</div>}
+        {message && <div className="ui-alert-info mt-4">{message}</div>}
       </section>
 
       <section className="grid gap-4 xl:grid-cols-2">
@@ -200,25 +192,29 @@ export default function WorkersPage() {
               </div>
 
               <div className="flex w-full gap-2 sm:w-auto">
-                <button
-                  className="admin-secondary flex-1 sm:flex-none"
+                <Button
+                  className="flex-1 sm:flex-none"
                   onClick={() => openEditModal(worker)}
                   type="button"
+                  variant="secondary"
+                  size="sm"
                 >
                   Редактировать
-                </button>
-                <button
-                  className="admin-danger flex-1 sm:flex-none"
+                </Button>
+                <Button
+                  className="flex-1 sm:flex-none"
                   onClick={() => handleDelete(worker)}
                   type="button"
+                  variant="danger"
+                  size="sm"
                 >
                   Удалить
-                </button>
+                </Button>
               </div>
             </div>
 
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5">
+              <div className="ui-card-muted px-4 py-3.5">
                 <div className="text-xs uppercase tracking-[0.14em] text-slate-400">
                   Назначен в услуги
                 </div>
@@ -226,7 +222,7 @@ export default function WorkersPage() {
                   {getAssignLabel(worker.services_count)}
                 </div>
               </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5">
+              <div className="ui-card-muted px-4 py-3.5">
                 <div className="text-xs uppercase tracking-[0.14em] text-slate-400">
                   Карточка сотрудника
                 </div>
@@ -258,21 +254,18 @@ export default function WorkersPage() {
         widthClassName="max-w-xl"
         footer={
           <>
-            <button className="admin-secondary" onClick={closeModal} type="button">
+            <Button onClick={closeModal} type="button" variant="secondary">
               Отмена
-            </button>
-            <button
-              className="admin-primary"
+            </Button>
+            <Button
               form="worker-form"
               type="submit"
               disabled={submitting}
+              loading={submitting}
+              variant="primary"
             >
-              {submitting
-                ? "Сохраняем..."
-                : form.id
-                  ? "Сохранить работника"
-                  : "Добавить работника"}
-            </button>
+              {form.id ? "Сохранить работника" : "Добавить работника"}
+            </Button>
           </>
         }
       >
@@ -314,11 +307,7 @@ export default function WorkersPage() {
             />
           </label>
 
-          {modalError && (
-            <div className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 px-4 py-3 text-sm text-fuchsia-700">
-              {modalError}
-            </div>
-          )}
+          {modalError && <div className="ui-alert-error">{modalError}</div>}
         </form>
       </Modal>
     </div>

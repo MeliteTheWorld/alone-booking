@@ -116,10 +116,10 @@ export default function DatePickerField({
         </span>
 
         {open && (
-          <div className="absolute left-0 top-[calc(100%+10px)] z-30 w-[320px] max-w-[calc(100vw-2rem)] rounded-[24px] border border-slate-200 bg-white p-4 shadow-[0_18px_44px_rgba(15,23,42,0.14)]">
+          <div className="ui-menu absolute left-0 top-[calc(100%+10px)] z-30 w-[320px] max-w-[calc(100vw-2rem)] p-4">
             <div className="flex items-center justify-between gap-3">
               <button
-                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:text-slate-700"
+                className="ui-btn ui-btn-sm ui-btn-secondary h-9 w-9 !rounded-xl !px-0"
                 onClick={() =>
                   setMonthDate(
                     new Date(monthDate.getFullYear(), monthDate.getMonth() - 1, 1)
@@ -138,7 +138,7 @@ export default function DatePickerField({
               </div>
 
               <button
-                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:text-slate-700"
+                className="ui-btn ui-btn-sm ui-btn-secondary h-9 w-9 !rounded-xl !px-0"
                 onClick={() =>
                   setMonthDate(
                     new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 1)
@@ -190,14 +190,14 @@ export default function DatePickerField({
 
             <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-3">
               <button
-                className="text-sm font-semibold text-slate-500 hover:text-slate-700"
+                className="ui-btn ui-btn-sm ui-btn-ghost"
                 onClick={() => setOpen(false)}
                 type="button"
               >
                 Закрыть
               </button>
               <button
-                className="text-sm font-semibold text-violet-600 hover:text-violet-700"
+                className="ui-btn ui-btn-sm ui-btn-ghost text-violet-600"
                 onClick={() => {
                   const today = new Date();
                   const todayIso = toIsoDate(today);

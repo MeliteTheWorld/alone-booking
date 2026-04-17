@@ -3,6 +3,8 @@ import { query } from "../config/db.js";
 import { requireAuth } from "../middleware/auth.js";
 import {
   broadcastNotificationRead,
+  broadcastNotificationDeleted,
+  broadcastNotificationsCleared,
   broadcastNotificationsReadAll
 } from "../ws/notificationHub.js";
 
@@ -103,6 +105,47 @@ router.patch("/read-all", requireAuth, async (req, res) => {
     return res
       .status(500)
       .json({ message: "Не удалось отметить все уведомления" });
+  }
+});
+
+router.delete("/:id", requireAuth, async (req, res) => {
+  try {
+    const result = await query(
+      `
+        DELETE FROM notifications
+        WHERE id = $1 AND user_id = $2
+        RETURNING id
+      `,
+      [req.params.id, req.user.id]
+    );
+
+    if (!result.rowCount) {
+      return res.status(404).json({ message: "Уведомление не найдено" });
+    }
+
+    broadcastNotificationDeleted(req.user.id, result.rows[0].id);
+
+    return res.json({ success: true, id: result.rows[0].id });
+  } catch (error) {
+    return res.status(500).json({ message: "Не удалось удалить уведомление" });
+  }
+});
+
+router.delete("/", requireAuth, async (req, res) => {
+  try {
+    await query(
+      `
+        DELETE FROM notifications
+        WHERE user_id = $1
+      `,
+      [req.user.id]
+    );
+
+    broadcastNotificationsCleared(req.user.id);
+
+    return res.json({ success: true });
+  } catch (error) {
+    return res.status(500).json({ message: "Не удалось очистить уведомления" });
   }
 });
 

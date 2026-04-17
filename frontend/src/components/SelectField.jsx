@@ -75,21 +75,19 @@ export default function SelectField({
         </span>
 
         {open && (
-          <div className="absolute left-0 top-[calc(100%+10px)] z-30 w-full overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_18px_44px_rgba(15,23,42,0.14)]">
-            <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+          <div className="ui-menu absolute left-0 top-[calc(100%+10px)] z-30 w-full">
+            <div className="ui-menu-header">
               {label || placeholder}
             </div>
 
-            <div className="max-h-72 overflow-y-auto p-2">
+            <div className="ui-menu-body max-h-72 overflow-y-auto">
               {options.map((option) => {
                 const isActive = String(option.value) === String(value);
 
                 return (
                   <button
                     key={option.value}
-                    className={`w-full rounded-2xl px-4 py-3 text-left ${
-                      isActive ? "bg-violet-50 text-violet-700" : "text-slate-700 hover:bg-slate-50"
-                    }`}
+                    className={`ui-menu-item ${isActive ? "ui-menu-item-active" : ""}`}
                     onClick={() => {
                       onChange(option.value);
                       setOpen(false);

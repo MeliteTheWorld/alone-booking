@@ -1,4 +1,5 @@
 import { Link, NavLink } from "react-router-dom";
+import Button from "./Button.jsx";
 import BrandLogo from "./BrandLogo.jsx";
 import NotificationBell from "./NotificationBell.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -35,11 +36,11 @@ export default function NavBar() {
   const selectedAvatar = getAvatarByKey(user?.avatar_key);
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/92 backdrop-blur-xl">
-      <div className="mx-auto max-w-7xl px-4 py-3 md:px-8 md:py-4">
+      <div className="mx-auto max-w-7xl px-3 py-2.5 sm:px-4 md:px-6 md:py-3 xl:px-8 xl:py-4">
         <div className="relative flex items-center justify-between gap-3">
           <BrandLogo compact to="/" />
 
-          <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1.5 md:flex">
+          <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1.5 lg:flex">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
@@ -52,14 +53,14 @@ export default function NavBar() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-2 md:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
             {isAuthenticated ? (
               <>
                 <NotificationBell />
                 {isAdmin && (
                   <Link
                     aria-label="Админ панель"
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:bg-violet-50 hover:text-violet-700"
+                    className="ui-icon-button hover:bg-violet-50 hover:text-violet-700"
                     to="/admin"
                   >
                     <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24">
@@ -98,7 +99,7 @@ export default function NavBar() {
                   </Link>
                 )}
                 <button
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:bg-rose-50 hover:text-rose-600"
+                  className="ui-icon-button hover:bg-rose-50 hover:text-rose-600"
                   onClick={logout}
                   type="button"
                 >
@@ -120,7 +121,7 @@ export default function NavBar() {
                 </Link>
                 <Link
                   aria-label="Профиль"
-                  className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-violet-50 text-sm font-bold text-violet-700"
+                  className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-violet-50 text-sm font-bold text-violet-700 shadow-[0_8px_20px_rgba(142,99,245,0.08)] sm:h-10 sm:w-10"
                   to="/profile"
                 >
                   {selectedAvatar ? (
@@ -136,24 +137,23 @@ export default function NavBar() {
               </>
             ) : (
               <>
-                <Link
-                  className="admin-secondary !rounded-full !px-4 !py-2.5 text-sm md:!px-5"
-                  to="/auth"
-                >
+                <Button className="!rounded-full !px-3 sm:!px-4 md:!px-5" size="sm" to="/auth" variant="secondary">
                   Войти
-                </Link>
-                <Link
-                  className="admin-primary !rounded-full !px-4 !py-2.5 text-sm md:!px-5"
+                </Button>
+                <Button
+                  className="!rounded-full !px-3 sm:!px-4 md:!px-5"
+                  size="sm"
                   to="/auth?mode=register"
+                  variant="primary"
                 >
                   Регистрация
-                </Link>
+                </Button>
               </>
             )}
           </div>
         </div>
 
-        <nav className="mt-3 flex gap-2 overflow-x-auto pb-1 md:hidden">
+        <nav className="mt-3 flex gap-2 overflow-x-auto pb-1 lg:hidden">
           {navItems.map((item) => (
             <NavLink
               key={item.to}

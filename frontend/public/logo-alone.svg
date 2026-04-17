@@ -1,0 +1,33 @@
+<svg width="420" height="120" viewBox="0 0 420 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="aloneGradient" x1="18" y1="16" x2="102" y2="104" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8E63F5"/>
+      <stop offset="1" stop-color="#6D43D7"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="16" y="16" width="88" height="88" rx="22" fill="url(#aloneGradient)"/>
+
+  <rect
+    x="39"
+    y="39"
+    width="42"
+    height="42"
+    rx="8"
+    transform="rotate(45 60 60)"
+    stroke="white"
+    stroke-width="5"
+  />
+
+  <text
+    x="128"
+    y="75"
+    fill="#7C4EE4"
+    font-family="Segoe UI, Arial, sans-serif"
+    font-size="52"
+    font-weight="700"
+    letter-spacing="0.5"
+  >
+    ALONE
+  </text>
+</svg>

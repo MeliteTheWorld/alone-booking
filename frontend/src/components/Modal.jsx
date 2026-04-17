@@ -44,10 +44,11 @@ export default function Modal({
         type="button"
       />
       <div
-        className={`relative z-[1] w-full ${widthClassName} overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.18)]`}
+        className={`relative z-[1] w-full ${widthClassName} overflow-hidden rounded-[28px] border bg-white shadow-[0_24px_80px_rgba(15,23,42,0.18)]`}
+        style={{ borderColor: "var(--ui-border)" }}
       >
-        <div className="border-b border-slate-200 px-5 py-4 md:px-6">
-          <div className="text-xl font-bold text-slate-900">{title}</div>
+        <div className="border-b px-5 py-4 md:px-6" style={{ borderColor: "var(--ui-border)" }}>
+          <div className="text-xl font-bold text-slate-950">{title}</div>
           {description && (
             <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p>
           )}
@@ -58,7 +59,10 @@ export default function Modal({
         ) : null}
 
         {footer && (
-          <div className="flex flex-wrap justify-end gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4 md:px-6">
+          <div
+            className="flex flex-wrap justify-end gap-3 border-t bg-slate-50 px-5 py-4 md:px-6"
+            style={{ borderColor: "var(--ui-border)" }}
+          >
             {footer}
           </div>
         )}

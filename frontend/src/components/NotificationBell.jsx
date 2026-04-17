@@ -13,8 +13,16 @@ function formatTimestamp(value) {
 
 export default function NotificationBell() {
   const navigate = useNavigate();
-  const { items, unreadCount, loading, refresh, markAsRead, markAllAsRead } =
-    useNotifications();
+  const {
+    items,
+    unreadCount,
+    loading,
+    refresh,
+    markAsRead,
+    markAllAsRead,
+    removeNotification,
+    clearAll
+  } = useNotifications();
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
 
@@ -61,10 +69,22 @@ export default function NotificationBell() {
     }
   };
 
+  const handleDelete = async (event, notificationId) => {
+    event.stopPropagation();
+    event.preventDefault();
+    await removeNotification(notificationId);
+  };
+
+  const handleClearAll = async () => {
+    await clearAll();
+  };
+
+  const canClear = items.length > 0;
+
   return (
     <div className="relative" ref={rootRef}>
       <button
-        className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-900"
+        className="ui-icon-button relative"
         onClick={handleToggle}
         type="button"
       >
@@ -86,8 +106,8 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-[calc(100%+12px)] z-30 w-[min(380px,calc(100vw-32px))] overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.16)]">
-          <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
+        <div className="absolute right-0 top-[calc(100%+10px)] z-30 w-[min(380px,calc(100vw-24px))] overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.16)] sm:w-[min(380px,calc(100vw-32px))]">
+          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-5">
             <div>
               <div className="text-sm font-semibold text-slate-900">Уведомления</div>
               <div className="mt-1 text-xs text-slate-500">
@@ -95,19 +115,29 @@ export default function NotificationBell() {
               </div>
             </div>
 
-            <button
-              className="text-xs font-semibold text-violet-600 disabled:text-slate-300"
-              disabled={!unreadCount}
-              onClick={markAllAsRead}
-              type="button"
-            >
-              Прочитать все
-            </button>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                className="text-xs font-semibold text-violet-600 disabled:text-slate-300"
+                disabled={!unreadCount}
+                onClick={markAllAsRead}
+                type="button"
+              >
+                Прочитать все
+              </button>
+              <button
+                className="text-xs font-semibold text-rose-600 disabled:text-slate-300"
+                disabled={!canClear}
+                onClick={handleClearAll}
+                type="button"
+              >
+                Очистить всё
+              </button>
+            </div>
           </div>
 
-          <div className="max-h-[420px] overflow-y-auto p-3">
+          <div className="max-h-[70vh] overflow-y-auto p-3 sm:max-h-[420px]">
             {loading && !items.length ? (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-500">
+              <div className="ui-alert border-slate-200 bg-slate-50 text-slate-500">
                 Загружаем уведомления...
               </div>
             ) : items.length ? (
@@ -121,30 +151,48 @@ export default function NotificationBell() {
                     }`}
                     key={notification.id}
                   >
-                    <button
-                      className="block w-full text-left"
-                      onClick={() => openNotification(notification)}
-                      type="button"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <div className="text-sm font-semibold text-slate-900">
-                              {notification.title}
+                    <div className="flex items-start justify-between gap-3">
+                      <button
+                        className="block min-w-0 flex-1 text-left"
+                        onClick={() => openNotification(notification)}
+                        type="button"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <div className="text-sm font-semibold text-slate-900">
+                                {notification.title}
+                              </div>
+                              {!notification.is_read && (
+                                <span className="h-2.5 w-2.5 rounded-full bg-violet-600" />
+                              )}
                             </div>
-                            {!notification.is_read && (
-                              <span className="h-2.5 w-2.5 rounded-full bg-violet-600" />
-                            )}
+                            <div className="mt-2 text-sm leading-6 text-slate-600">
+                              {notification.message}
+                            </div>
                           </div>
-                          <div className="mt-2 text-sm leading-6 text-slate-600">
-                            {notification.message}
+                          <div className="shrink-0 text-[11px] text-slate-400">
+                            {formatTimestamp(notification.created_at)}
                           </div>
                         </div>
-                        <div className="shrink-0 text-[11px] text-slate-400">
-                          {formatTimestamp(notification.created_at)}
-                        </div>
-                      </div>
-                    </button>
+                      </button>
+                      <button
+                        aria-label="Удалить уведомление"
+                        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-rose-50 hover:text-rose-600"
+                        onClick={(event) => handleDelete(event, notification.id)}
+                        type="button"
+                      >
+                        <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24">
+                          <path
+                            d="M9 4.5h6M4.5 7.5h15M10 10.5v6M14 10.5v6M6.5 7.5l.8 10a2 2 0 0 0 2 1.8h5.4a2 2 0 0 0 2-1.8l.8-10"
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="1.8"
+                          />
+                        </svg>
+                      </button>
+                    </div>
 
                     {!notification.is_read && (
                       <button

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { api } from "../api/client.js";
+import Button from "../components/Button.jsx";
 import DatePickerField from "../components/DatePickerField.jsx";
 import SelectField from "../components/SelectField.jsx";
 import { useConfirmDialog } from "../context/ConfirmDialogContext.jsx";
@@ -227,9 +228,9 @@ export default function BookingPage() {
         </p>
 
         {!isAuthenticated && (
-          <div className="mt-6 rounded-3xl border border-violet-200 bg-violet-50 p-5 text-sm text-violet-700">
+          <div className="ui-alert-info mt-6 rounded-3xl p-5">
             Для подтверждения записи нужен аккаунт клиента.{" "}
-            <Link className="font-semibold underline" to="/auth?mode=login">
+            <Link className="ui-text-link underline" to="/auth?mode=login">
               Войти
             </Link>
           </div>
@@ -344,24 +345,19 @@ export default function BookingPage() {
               </div>
             </div>
 
-            {error && (
-              <div className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 px-4 py-3 text-sm text-fuchsia-700">
-                {error}
-              </div>
-            )}
-            {message && (
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-700">
-                {message}
-              </div>
-            )}
+            {error && <div className="ui-alert-error">{error}</div>}
+            {message && <div className="ui-alert-info">{message}</div>}
 
-            <button
-              className={`w-full ${canSubmit && !submitting ? "btn-primary" : "btn-disabled"}`}
+            <Button
+              className="w-full"
               disabled={!canSubmit || submitting}
+              loading={submitting}
+              size="lg"
               type="submit"
+              variant={canSubmit ? "primary" : "disabled"}
             >
-              {submitting ? "Сохраняем..." : submitDisabledReason || "Подтвердить запись"}
-            </button>
+              {submitDisabledReason || "Подтвердить запись"}
+            </Button>
           </form>
 
           <div className="space-y-5">
@@ -438,7 +434,7 @@ export default function BookingPage() {
                   "Если планы изменятся, запись можно перенести или отменить из профиля."
                 ].map((item, index) => (
                   <div
-                    className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+                  className="ui-card-muted flex items-start gap-3 px-4 py-3"
                     key={item}
                   >
                     <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-bold text-violet-700">

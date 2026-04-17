@@ -2,6 +2,20 @@ import { useEffect, useState } from "react";
 import { api } from "../api/client.js";
 import ServiceCard from "../components/ServiceCard.jsx";
 
+function SearchIcon() {
+  return (
+    <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24">
+      <path
+        d="m21 21-4.35-4.35M18 10.5a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.9"
+      />
+    </svg>
+  );
+}
+
 const filterOptions = [
   { value: "all", label: "Все услуги" },
   { value: "short", label: "До 45 минут" },
@@ -69,63 +83,63 @@ export default function ServicesPage() {
     : 0;
 
   return (
-    <div className="space-y-5 md:space-y-6">
-      <section className="surface p-5 md:p-6">
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <div className="chip">КАТАЛОГ УСЛУГ</div>
-              <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
-                Услуги
-              </h1>
-              <div className="mt-1 text-sm text-slate-500">
-                Найдено {filteredServices.length} из {services.length} • от{" "}
-                {priceFrom.toLocaleString("ru-RU")} ₽
-              </div>
+    <div className="space-y-8 md:space-y-10">
+      <section className="surface p-5 md:p-8">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-end">
+          <div>
+            <div className="chip">Каталог услуг</div>
+            <h1 className="mt-4 text-3xl font-bold text-slate-950 md:text-4xl">
+              Услуги
+            </h1>
+            <div className="mt-2 text-sm text-slate-500">
+              Найдено {filteredServices.length} из {services.length} • от{" "}
+              {priceFrom.toLocaleString("ru-RU")} ₽
             </div>
+          </div>
 
-            <label className="block lg:w-[360px]">
-              <span className="ui-label">Поиск по каталогу</span>
+          <label className="block">
+            <span className="mb-3 block text-sm font-semibold text-slate-700">
+              Поиск по каталогу
+            </span>
+            <div className="ui-input-shell rounded-[20px] px-4 py-3.5">
+              <span className="mr-3 text-slate-400">
+                <SearchIcon />
+              </span>
               <input
-                className="field"
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Например: маникюр, мужская стрижка"
                 type="text"
                 value={search}
               />
-            </label>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-            <div className="flex flex-wrap gap-2">
-              {filterOptions.map((option) => {
-                const isActive = activeFilter === option.value;
-
-                return (
-                  <button
-                    className={
-                      isActive
-                        ? "rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(15,23,42,0.12)]"
-                        : "rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-600"
-                    }
-                    key={option.value}
-                    onClick={() => setActiveFilter(option.value)}
-                    type="button"
-                  >
-                    {option.label}
-                  </button>
-                );
-              })}
             </div>
+          </label>
+        </div>
+
+        <div className="mt-5 rounded-[22px] border border-slate-200 bg-slate-50 p-3">
+          <div className="ui-tab-group">
+            {filterOptions.map((option) => {
+              const isActive = activeFilter === option.value;
+
+              return (
+                <button
+                  className={isActive ? "ui-tab ui-tab-active" : "ui-tab"}
+                  key={option.value}
+                  onClick={() => setActiveFilter(option.value)}
+                  type="button"
+                >
+                  {option.label}
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {loading && <div className="surface p-6">Загрузка услуг...</div>}
-      {error && <div className="surface p-6 text-fuchsia-700">{error}</div>}
+      {loading && <div className="surface p-6 md:p-8 xl:p-10">Загрузка услуг...</div>}
+      {error && <div className="surface p-6 md:p-8 xl:p-10 text-fuchsia-700">{error}</div>}
 
       {!loading && !error && !filteredServices.length && (
-        <div className="surface p-6 md:p-8">
+        <div className="surface p-6 md:p-8 xl:p-10">
           <h2 className="text-2xl font-bold text-slate-900">Ничего не найдено</h2>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-500">
             Попробуйте убрать часть текста из поиска или переключить фильтр. Каталог

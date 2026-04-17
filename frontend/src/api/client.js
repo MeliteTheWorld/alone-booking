@@ -166,6 +166,14 @@ export const api = {
     markAllRead: () =>
       request("/notifications/read-all", {
         method: "PATCH"
+      }),
+    remove: (id) =>
+      request(`/notifications/${id}`, {
+        method: "DELETE"
+      }),
+    clearAll: () =>
+      request("/notifications", {
+        method: "DELETE"
       })
   }
 };

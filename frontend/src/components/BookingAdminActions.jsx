@@ -1,33 +1,35 @@
+import Button from "./Button.jsx";
+
 const ACTIONS_BY_STATUS = {
   pending: [
     {
       status: "confirmed",
       label: "Подтвердить",
-      className: "admin-primary"
+      variant: "primary"
     },
     {
       status: "cancelled",
       label: "Отменить",
-      className: "admin-danger"
+      variant: "danger"
     }
   ],
   confirmed: [
     {
       status: "in_progress",
       label: "В работу",
-      className: "admin-primary"
+      variant: "primary"
     },
     {
       status: "cancelled",
       label: "Отменить",
-      className: "admin-secondary"
+      variant: "secondary"
     }
   ],
   in_progress: [
     {
       status: "completed",
       label: "Услуга оказана",
-      className: "admin-primary"
+      variant: "primary"
     }
   ],
   completed: [],
@@ -61,23 +63,25 @@ export default function BookingAdminActions({
   return (
     <div className={containerClass}>
       {actions.map((action) => (
-        <button
+        <Button
           key={action.status}
-          className={`${action.className} ${fullWidth ? "w-full" : ""} ${buttonSizeClass}`}
+          className={`${fullWidth ? "w-full" : ""} ${buttonSizeClass}`}
           onClick={() => onAction(action.status)}
-          type="button"
+          size={compact ? "sm" : "md"}
+          variant={action.variant}
         >
           {action.label}
-        </button>
+        </Button>
       ))}
       {onDelete && (
-        <button
-          className={`admin-danger ${fullWidth ? "w-full" : ""} ${buttonSizeClass}`}
+        <Button
+          className={`${fullWidth ? "w-full" : ""} ${buttonSizeClass}`}
           onClick={onDelete}
-          type="button"
+          size={compact ? "sm" : "md"}
+          variant="danger"
         >
           Удалить
-        </button>
+        </Button>
       )}
     </div>
   );
