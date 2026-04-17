@@ -1,5 +1,14 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
+export function getNotificationsWsUrl(token) {
+  const baseUrl = API_URL.replace(/\/api\/?$/, "");
+  const wsBaseUrl = baseUrl.startsWith("https://")
+    ? baseUrl.replace("https://", "wss://")
+    : baseUrl.replace("http://", "ws://");
+
+  return `${wsBaseUrl}/ws/notifications?token=${encodeURIComponent(token)}`;
+}
+
 async function request(path, options = {}) {
   const token = localStorage.getItem("booking-token");
   const headers = {
@@ -62,6 +71,23 @@ export const api = {
         method: "DELETE"
       })
   },
+  workers: {
+    getAll: () => request("/workers"),
+    create: (payload) =>
+      request("/workers", {
+        method: "POST",
+        body: JSON.stringify(payload)
+      }),
+    update: (id, payload) =>
+      request(`/workers/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(payload)
+      }),
+    remove: (id) =>
+      request(`/workers/${id}`, {
+        method: "DELETE"
+      })
+  },
   bookings: {
     getAll: () => request("/bookings"),
     create: (payload) =>
@@ -91,9 +117,10 @@ export const api = {
     analytics: () => request("/bookings/dashboard/analytics")
   },
   schedule: {
-    getSlots: (serviceId, date, excludeBookingId) => {
+    getSlots: (serviceId, date, workerId, excludeBookingId) => {
       const params = new URLSearchParams({
         serviceId: String(serviceId),
+        workerId: String(workerId),
         date
       });
 
@@ -111,5 +138,16 @@ export const api = {
       }),
     getLoad: (from, to) =>
       request(`/schedule/load?from=${from}&to=${to}`)
+  },
+  notifications: {
+    getAll: () => request("/notifications"),
+    markRead: (id) =>
+      request(`/notifications/${id}/read`, {
+        method: "PATCH"
+      }),
+    markAllRead: () =>
+      request("/notifications/read-all", {
+        method: "PATCH"
+      })
   }
 };

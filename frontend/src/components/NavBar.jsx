@@ -1,5 +1,6 @@
 import { Link, NavLink } from "react-router-dom";
 import BrandLogo from "./BrandLogo.jsx";
+import NotificationBell from "./NotificationBell.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { getAvatarByKey } from "../utils/avatars.js";
 
@@ -54,33 +55,7 @@ export default function NavBar() {
           <div className="flex items-center gap-2 md:gap-3">
             {isAuthenticated ? (
               <>
-                <button
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-900"
-                  type="button"
-                >
-                  <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24">
-                    <path
-                      d="m21 21-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeWidth="1.8"
-                    />
-                  </svg>
-                </button>
-                <button
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-900"
-                  type="button"
-                >
-                  <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24">
-                    <path
-                      d="M6.3 8.8A5.7 5.7 0 0 1 12 3a5.7 5.7 0 0 1 5.7 5.8v2.1c0 .9.3 1.8.8 2.5l.5.7a1 1 0 0 1-.8 1.6H5.8a1 1 0 0 1-.8-1.6l.5-.7c.5-.7.8-1.6.8-2.5V8.8ZM10 19a2 2 0 1 0 4 0"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="1.8"
-                    />
-                  </svg>
-                </button>
+                <NotificationBell />
                 {isAdmin && (
                   <Link
                     aria-label="Админ панель"

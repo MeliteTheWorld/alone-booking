@@ -24,7 +24,7 @@ function getFilterMatch(service, activeFilter) {
   }
 
   if (activeFilter === "assigned") {
-    return Boolean(service.staff_name && service.staff_name !== "Не назначен");
+    return Number(service.workers_count) > 0;
   }
 
   return true;
@@ -57,6 +57,7 @@ export default function ServicesPage() {
     const matchesSearch = !normalizedSearch
       ? true
       : [service.name, service.description, service.staff_name]
+          .concat((service.workers || []).map((worker) => worker.full_name))
           .filter(Boolean)
           .some((value) => value.toLowerCase().includes(normalizedSearch));
 
@@ -73,9 +74,7 @@ export default function ServicesPage() {
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <div className="inline-flex items-center rounded-full border border-violet-100 bg-violet-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.24em] text-violet-600">
-                Каталог услуг
-              </div>
+              <div className="chip">КАТАЛОГ УСЛУГ</div>
               <h1 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
                 Услуги
               </h1>

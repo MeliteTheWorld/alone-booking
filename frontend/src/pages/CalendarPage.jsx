@@ -3,6 +3,7 @@ import { api } from "../api/client.js";
 import AnimatedCollapse from "../components/AnimatedCollapse.jsx";
 import BookingAdminActions from "../components/BookingAdminActions.jsx";
 import BookingStatusBadge from "../components/BookingStatusBadge.jsx";
+import { useNotifications } from "../context/NotificationsContext.jsx";
 
 const weekDays = ["ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС"];
 const workDays = [
@@ -97,6 +98,7 @@ function eventColor(serviceId, status) {
 }
 
 export default function CalendarPage() {
+  const { refresh: refreshNotifications } = useNotifications();
   const [hours, setHours] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [error, setError] = useState("");
@@ -197,8 +199,9 @@ export default function CalendarPage() {
             ? "Услуга переведена в работу"
             : status === "completed"
               ? "Услуга отмечена как оказанная"
-              : "Запись отменена"
+            : "Запись отменена"
       );
+      await refreshNotifications({ silent: true });
       await loadData();
     } catch (statusError) {
       setError(statusError.message);
@@ -218,6 +221,7 @@ export default function CalendarPage() {
       setError("");
       await api.bookings.remove(id);
       setMessage("Запись удалена");
+      await refreshNotifications({ silent: true });
       await loadData();
     } catch (deleteError) {
       setError(deleteError.message);

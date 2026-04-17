@@ -7,22 +7,22 @@ export default function BrandLogo({ to = "/", compact = false }) {
       className="brand-logo inline-flex items-center gap-3 text-[#7c4ee4]"
     >
       <span
-        className={`brand-logo-icon relative inline-flex shrink-0 overflow-hidden items-center justify-center rounded-[24px] bg-gradient-to-br from-[#8e63f5] to-[#6d43d7] ${
-          compact ? "h-12 w-12 rounded-[16px]" : "h-16 w-16"
+        className={`brand-logo-icon relative inline-flex shrink-0 overflow-hidden items-center justify-center rounded-[25%] bg-gradient-to-br from-[#8e63f5] to-[#6d43d7] ${
+          compact ? "h-12 w-12" : "h-16 w-16"
         }`}
       >
         <svg
           aria-hidden="true"
-          className={`relative z-[1] ${compact ? "h-7 w-7" : "h-9 w-9"}`}
+          className={`relative z-[1] ${compact ? "h-8 w-8" : "h-10 w-10"}`}
           fill="none"
           viewBox="0 0 64 64"
         >
           <rect
-            x="14"
-            y="14"
-            width="36"
-            height="36"
-            rx="7"
+            x="12"
+            y="12"
+            width="40"
+            height="40"
+            rx="8"
             transform="rotate(45 32 32)"
             stroke="white"
             strokeWidth="5"

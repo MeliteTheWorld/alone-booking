@@ -3,6 +3,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../api/client.js";
 import ProfileBookingsTab from "../components/ProfileBookingsTab.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useConfirmDialog } from "../context/ConfirmDialogContext.jsx";
+import { getLocalIsoDate } from "../utils/date.js";
 import { avatarOptions, getAvatarByKey } from "../utils/avatars.js";
 
 function formatDate(dateValue) {
@@ -18,7 +20,7 @@ function formatDate(dateValue) {
 }
 
 function todayIso() {
-  return new Date().toISOString().slice(0, 10);
+  return getLocalIsoDate();
 }
 
 function buildClientStats(bookings) {
@@ -84,6 +86,7 @@ const emptyPasswordForm = {
 
 export default function ProfilePage() {
   const { user, isAdmin, refreshProfile, updateProfile } = useAuth();
+  const confirm = useConfirmDialog();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [profile, setProfile] = useState(null);
@@ -170,14 +173,30 @@ export default function ProfilePage() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setSaving(true);
-    setError("");
-    setMessage("");
 
     try {
       if (passwordForm.new_password && passwordForm.new_password !== passwordForm.confirm_password) {
         throw new Error("Подтверждение нового пароля не совпадает");
       }
+
+      const approved = await confirm({
+        title: passwordForm.new_password
+          ? "Сохранить профиль и сменить пароль?"
+          : "Сохранить изменения профиля?",
+        description: passwordForm.new_password
+          ? "Имя, email, аватар и новый пароль будут применены к вашему аккаунту."
+          : "Обновлённые данные профиля будут сразу сохранены.",
+        confirmText: "Да, сохранить",
+        cancelText: "Нет"
+      });
+
+      if (!approved) {
+        return;
+      }
+
+      setSaving(true);
+      setError("");
+      setMessage("");
 
       const payload = {
         name: form.name,

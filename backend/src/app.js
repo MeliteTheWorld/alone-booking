@@ -3,8 +3,10 @@ import cors from "cors";
 import express from "express";
 import authRoutes from "./routes/authRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 import scheduleRoutes from "./routes/scheduleRoutes.js";
 import serviceRoutes from "./routes/serviceRoutes.js";
+import workerRoutes from "./routes/workerRoutes.js";
 
 const app = express();
 const configuredOrigins = (process.env.CLIENT_URL ||
@@ -46,8 +48,10 @@ app.get("/api/health", (_req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/services", serviceRoutes);
+app.use("/api/workers", workerRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/schedule", scheduleRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 app.use((err, _req, res, _next) => {
   return res.status(500).json({

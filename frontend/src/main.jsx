@@ -3,6 +3,8 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
+import { ConfirmDialogProvider } from "./context/ConfirmDialogContext.jsx";
+import { NotificationsProvider } from "./context/NotificationsContext.jsx";
 import "./index.css";
 
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1"]);
@@ -46,7 +48,11 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
+        <NotificationsProvider>
+          <ConfirmDialogProvider>
+            <App />
+          </ConfirmDialogProvider>
+        </NotificationsProvider>
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>

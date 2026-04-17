@@ -3,10 +3,13 @@ import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { api } from "../api/client.js";
 import DatePickerField from "../components/DatePickerField.jsx";
 import SelectField from "../components/SelectField.jsx";
+import { useConfirmDialog } from "../context/ConfirmDialogContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useNotifications } from "../context/NotificationsContext.jsx";
+import { getLocalIsoDate } from "../utils/date.js";
 
 function todayString() {
-  return new Date().toISOString().slice(0, 10);
+  return getLocalIsoDate();
 }
 
 function formatDateLabel(value) {
@@ -19,11 +22,14 @@ function formatDateLabel(value) {
 
 export default function BookingPage() {
   const { isAuthenticated, isAdmin } = useAuth();
+  const { refresh: refreshNotifications } = useNotifications();
+  const confirm = useConfirmDialog();
   const [searchParams] = useSearchParams();
   const [services, setServices] = useState([]);
   const [selectedService, setSelectedService] = useState(
     searchParams.get("serviceId") || ""
   );
+  const [selectedWorker, setSelectedWorker] = useState("");
   const [selectedDate, setSelectedDate] = useState(todayString());
   const [selectedTime, setSelectedTime] = useState("");
   const [slots, setSlots] = useState([]);
@@ -32,11 +38,49 @@ export default function BookingPage() {
   const [submitting, setSubmitting] = useState(false);
   const selectedServiceMeta =
     services.find((service) => String(service.id) === String(selectedService)) || null;
+  const selectedWorkerMeta =
+    selectedServiceMeta?.workers?.find(
+      (worker) => String(worker.id) === String(selectedWorker)
+    ) || null;
+  const hasAssignedWorkers = (selectedServiceMeta?.workers || []).length > 0;
 
   const serviceOptions = services.map((service) => ({
     value: String(service.id),
     service
   }));
+
+  const submitDisabledReason = (() => {
+    if (!isAuthenticated) {
+      return "Войдите в аккаунт";
+    }
+
+    if (!selectedService) {
+      return "Выберите услугу";
+    }
+
+    if (!hasAssignedWorkers) {
+      return "Нет доступных исполнителей";
+    }
+
+    if (!selectedWorker) {
+      return "Выберите исполнителя";
+    }
+
+    if (!selectedDate) {
+      return "Выберите дату";
+    }
+
+    if (!selectedTime) {
+      return slots.length ? "Выберите время" : "Нет свободного времени";
+    }
+
+    if (submitting) {
+      return "Сохраняем...";
+    }
+
+    return "";
+  })();
+  const canSubmit = !submitDisabledReason || submitDisabledReason === "Сохраняем...";
 
   if (isAdmin) {
     return <Navigate replace to="/admin?tab=calendar" />;
@@ -51,13 +95,17 @@ export default function BookingPage() {
 
   useEffect(() => {
     async function loadSlots() {
-      if (!selectedService || !selectedDate) {
+      if (!selectedService || !selectedWorker || !selectedDate) {
         setSlots([]);
         return;
       }
 
       try {
-        const response = await api.schedule.getSlots(selectedService, selectedDate);
+        const response = await api.schedule.getSlots(
+          selectedService,
+          selectedDate,
+          selectedWorker
+        );
         setSlots(response.slots);
         setSelectedTime("");
       } catch (loadError) {
@@ -66,10 +114,82 @@ export default function BookingPage() {
     }
 
     loadSlots();
-  }, [selectedService, selectedDate]);
+  }, [selectedService, selectedWorker, selectedDate]);
+
+  useEffect(() => {
+    setSelectedWorker("");
+    setSelectedTime("");
+  }, [selectedService]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    const approved = await confirm({
+      title: "Подтвердить запись?",
+      description: selectedServiceMeta
+        ? `Проверьте детали визита перед отправкой заявки администратору.`
+        : "Подтвердите создание новой записи.",
+      content: selectedServiceMeta ? (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+            <div className="text-xs uppercase tracking-[0.14em] text-slate-400">
+              Услуга
+            </div>
+            <div className="mt-2 text-base font-semibold text-slate-900">
+              {selectedServiceMeta.name}
+            </div>
+            <div className="mt-1 text-sm text-slate-500">
+              {selectedWorkerMeta?.full_name || "Исполнитель не выбран"} •{" "}
+              {selectedWorkerMeta?.position || "Исполнитель"}
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="text-xs uppercase tracking-[0.14em] text-violet-500">
+                Дата визита
+              </div>
+              <div className="mt-2 text-lg font-bold text-slate-900">
+                {formatDateLabel(selectedDate)}
+              </div>
+            </div>
+            <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="text-xs uppercase tracking-[0.14em] text-violet-500">
+                Время визита
+              </div>
+              <div className="mt-2 text-lg font-bold text-slate-900">
+                {selectedTime}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+              <div className="text-xs uppercase tracking-[0.14em] text-slate-400">
+                Длительность
+              </div>
+              <div className="mt-2 text-base font-semibold text-slate-900">
+                {selectedServiceMeta.duration} минут
+              </div>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+              <div className="text-xs uppercase tracking-[0.14em] text-slate-400">
+                Стоимость
+              </div>
+              <div className="mt-2 text-base font-semibold text-slate-900">
+                {Number(selectedServiceMeta.price).toLocaleString("ru-RU")} ₽
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null,
+      confirmText: "Да, записаться",
+      cancelText: "Нет"
+    });
+
+    if (!approved) {
+      return;
+    }
+
     setSubmitting(true);
     setError("");
     setMessage("");
@@ -77,9 +197,11 @@ export default function BookingPage() {
     try {
       await api.bookings.create({
         service_id: Number(selectedService),
+        worker_id: Number(selectedWorker),
         booking_date: selectedDate,
         booking_time: selectedTime
       });
+      await refreshNotifications({ silent: true });
       setMessage("Запись создана. Администратор увидит её в календаре.");
       setSlots((currentSlots) =>
         currentSlots.filter((slot) => slot !== selectedTime)
@@ -118,7 +240,7 @@ export default function BookingPage() {
             <div className="grid gap-5 lg:grid-cols-2">
               <SelectField
                 label="Услуга"
-                onChange={setSelectedService}
+                onChange={(value) => setSelectedService(value)}
                 options={serviceOptions}
                 placeholder="Выберите услугу"
                 renderOption={(option, isActive) => (
@@ -127,14 +249,14 @@ export default function BookingPage() {
                       {option.service.name}
                     </div>
                     <div className="mt-1 text-sm text-slate-500">
-                      {option.service.staff_name || "Не назначен"} • {option.service.duration} мин •{" "}
+                      {option.service.workers_count || 0} исполн. • {option.service.duration} мин •{" "}
                       {Number(option.service.price).toLocaleString("ru-RU")} ₽
                     </div>
                   </div>
                 )}
                 renderValue={(option) => (
                   <span className="block truncate">
-                    {option.service.name} • {option.service.staff_name || "Не назначен"} • {option.service.duration} мин •{" "}
+                    {option.service.name} • {option.service.duration} мин •{" "}
                     {Number(option.service.price).toLocaleString("ru-RU")} ₽
                   </span>
                 )}
@@ -149,6 +271,34 @@ export default function BookingPage() {
               />
             </div>
 
+            <SelectField
+              label="Исполнитель"
+              onChange={setSelectedWorker}
+              options={(selectedServiceMeta?.workers || []).map((worker) => ({
+                value: String(worker.id),
+                worker
+              }))}
+              placeholder={
+                selectedServiceMeta
+                  ? "Выберите барбера или мастера"
+                  : "Сначала выберите услугу"
+              }
+              renderOption={(option, isActive) => (
+                <div>
+                  <div className={`font-semibold ${isActive ? "text-violet-700" : "text-slate-900"}`}>
+                    {option.worker.full_name}
+                  </div>
+                  <div className="mt-1 text-sm text-slate-500">{option.worker.position}</div>
+                </div>
+              )}
+              renderValue={(option) => (
+                <span className="block truncate">
+                  {option.worker.full_name} • {option.worker.position}
+                </span>
+              )}
+              value={selectedWorker}
+            />
+
             <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 md:p-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -156,7 +306,7 @@ export default function BookingPage() {
                   <div className="mt-1 text-sm text-slate-500">
                     {selectedServiceMeta
                       ? `На ${formatDateLabel(selectedDate)} доступно ${slots.length} вариантов`
-                      : "Сначала выберите услугу, чтобы увидеть доступное время"}
+                      : "Сначала выберите услугу и исполнителя, чтобы увидеть доступное время"}
                   </div>
                 </div>
                 {selectedTime && (
@@ -185,7 +335,9 @@ export default function BookingPage() {
                 ) : (
                   <div className="ui-slot-button ui-slot-button-disabled w-full justify-center">
                     {selectedServiceMeta
-                      ? "На выбранную дату свободных слотов нет"
+                      ? selectedWorker
+                        ? "На выбранную дату свободных слотов нет"
+                        : "Выберите исполнителя, чтобы увидеть время"
                       : "Выберите услугу, чтобы увидеть время"}
                   </div>
                 )}
@@ -204,11 +356,11 @@ export default function BookingPage() {
             )}
 
             <button
-              className="btn-primary w-full"
-              disabled={!isAuthenticated || !selectedTime || submitting}
+              className={`w-full ${canSubmit && !submitting ? "btn-primary" : "btn-disabled"}`}
+              disabled={!canSubmit || submitting}
               type="submit"
             >
-              {submitting ? "Сохраняем..." : "Подтвердить запись"}
+              {submitting ? "Сохраняем..." : submitDisabledReason || "Подтвердить запись"}
             </button>
           </form>
 
@@ -234,7 +386,10 @@ export default function BookingPage() {
                         Исполнитель
                       </div>
                       <div className="mt-2 font-semibold text-slate-900">
-                        {selectedServiceMeta.staff_name || "Не назначен"}
+                        {selectedWorkerMeta?.full_name || "Не выбран"}
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500">
+                        {selectedWorkerMeta?.position || "Выберите сотрудника из списка"}
                       </div>
                     </div>
                     <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">

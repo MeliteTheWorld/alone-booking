@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/client.js";
+import { useNotifications } from "../context/NotificationsContext.jsx";
 import AnimatedCollapse from "./AnimatedCollapse.jsx";
 import BookingStatusBadge from "./BookingStatusBadge.jsx";
 import DatePickerField from "./DatePickerField.jsx";
+import { getLocalIsoDate } from "../utils/date.js";
 
 function formatDate(dateValue) {
   return new Date(dateValue).toLocaleDateString("ru-RU", {
@@ -13,10 +15,11 @@ function formatDate(dateValue) {
 }
 
 function todayString() {
-  return new Date().toISOString().slice(0, 10);
+  return getLocalIsoDate();
 }
 
 export default function ProfileBookingsTab() {
+  const { refresh: refreshNotifications } = useNotifications();
   const [bookings, setBookings] = useState([]);
   const [editing, setEditing] = useState(null);
   const [slots, setSlots] = useState([]);
@@ -37,6 +40,7 @@ export default function ProfileBookingsTab() {
   const handleCancel = async (id) => {
     try {
       await api.bookings.cancel(id);
+      await refreshNotifications({ silent: true });
       await loadBookings();
     } catch (cancelError) {
       setError(cancelError.message);
@@ -48,6 +52,7 @@ export default function ProfileBookingsTab() {
     setEditing({
       id: booking.id,
       serviceId: booking.service_id,
+      workerId: booking.worker_id,
       date: bookingDate,
       time: booking.booking_time.slice(0, 5)
     });
@@ -56,6 +61,7 @@ export default function ProfileBookingsTab() {
       const response = await api.schedule.getSlots(
         booking.service_id,
         bookingDate,
+        booking.worker_id,
         booking.id
       );
       setSlots(response.slots);
@@ -72,6 +78,7 @@ export default function ProfileBookingsTab() {
       const response = await api.schedule.getSlots(
         nextEditing.serviceId,
         date,
+        nextEditing.workerId,
         nextEditing.id
       );
       setSlots(response.slots);
@@ -86,6 +93,7 @@ export default function ProfileBookingsTab() {
         booking_date: editing.date,
         booking_time: editing.time
       });
+      await refreshNotifications({ silent: true });
       setEditing(null);
       setSlots([]);
       await loadBookings();
@@ -126,6 +134,9 @@ export default function ProfileBookingsTab() {
                 <p className="mt-1 text-sm text-slate-500">
                   Длительность: {booking.duration} минут • Стоимость:{" "}
                   {Number(booking.price).toLocaleString("ru-RU")} ₽
+                </p>
+                <p className="mt-1 text-sm text-slate-500">
+                  Исполнитель: {booking.worker_name || "Не назначен"}
                 </p>
 
                 <AnimatedCollapse

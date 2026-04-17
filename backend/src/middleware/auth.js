@@ -1,5 +1,9 @@
 import jwt from "jsonwebtoken";
 
+export function verifyToken(token) {
+  return jwt.verify(token, process.env.JWT_SECRET || "dev-secret");
+}
+
 export function requireAuth(req, res, next) {
   const authHeader = req.headers.authorization;
 
@@ -10,7 +14,7 @@ export function requireAuth(req, res, next) {
   const token = authHeader.split(" ")[1];
 
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET || "dev-secret");
+    const payload = verifyToken(token);
     req.user = payload;
     return next();
   } catch (error) {
@@ -27,4 +31,3 @@ export function requireRole(...roles) {
     return next();
   };
 }
-

@@ -188,12 +188,28 @@ main {
     @apply inline-flex items-center justify-center rounded-2xl bg-[#8e63f5] px-5 py-3 font-semibold text-white shadow-[0_12px_30px_rgba(142,99,245,0.18)] transition hover:bg-[#7c4ee4];
   }
 
+  .btn-disabled {
+    @apply inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-slate-100 px-5 py-3 font-semibold text-slate-400 shadow-none cursor-not-allowed;
+  }
+
   .btn-secondary {
     @apply inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50;
   }
 
-  .chip {
-    @apply inline-flex items-center rounded-full border border-violet-100 bg-violet-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-violet-600;
+  .chip,
+  .admin-chip {
+    @apply inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold tracking-[0.16em] text-slate-500 shadow-[0_8px_20px_rgba(15,23,42,0.04)];
+  }
+
+  .chip::before,
+  .admin-chip::before {
+    content: "";
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 9999px;
+    background: #8e63f5;
+    box-shadow: 0 0 0 4px rgba(142, 99, 245, 0.12);
+    flex-shrink: 0;
   }
 
   .admin-shell {
@@ -236,7 +252,4 @@ main {
     @apply bg-violet-50 text-violet-700;
   }
 
-  .admin-chip {
-    @apply inline-flex items-center rounded-full border border-violet-100 bg-violet-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-violet-600;
-  }
 }

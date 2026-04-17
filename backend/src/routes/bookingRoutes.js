@@ -1,7 +1,21 @@
 import { Router } from "express";
 import { pool, query } from "../config/db.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
+import {
+  createNotification,
+  formatVisitMoment,
+  notifyAdminsAboutNewBooking,
+  notifyAdminsBookingChanged,
+  notifyClientBookingCreated,
+  notifyClientBookingStatusChanged
+} from "../utils/notifications.js";
+import {
+  filterPastSlotsForDate,
+  isPastIsoDate,
+  isPastTimeForToday
+} from "../utils/date.js";
 import { generateSlots } from "../utils/slots.js";
+import { broadcastNotificationsCreated } from "../ws/notificationHub.js";
 
 const router = Router();
 const RESERVED_STATUSES = ["pending", "confirmed", "in_progress", "completed"];
@@ -27,6 +41,23 @@ async function getService(serviceId, executor = query) {
   return result.rows[0];
 }
 
+async function getServiceWorker(serviceId, workerId, executor = query) {
+  const result = await executor(
+    `
+      SELECT
+        w.id,
+        w.position,
+        TRIM(CONCAT(w.last_name, ' ', w.first_name)) AS full_name
+      FROM service_workers sw
+      JOIN workers w ON w.id = sw.worker_id
+      WHERE sw.service_id = $1 AND sw.worker_id = $2
+    `,
+    [serviceId, workerId]
+  );
+
+  return result.rows[0] || null;
+}
+
 async function getDayConfig(date, executor = query) {
   const dayOfWeek = new Date(date).getUTCDay();
   const result = await executor(
@@ -43,22 +74,23 @@ async function getDayConfig(date, executor = query) {
 async function getAvailableSlots(
   date,
   serviceId,
+  workerId,
   excludeBookingId,
   executor = query
 ) {
   const service = await getService(serviceId, executor);
   const dayConfig = await getDayConfig(date, executor);
 
-  if (!service || !service.is_active || !dayConfig?.is_working) {
+  if (!service || !service.is_active || !dayConfig?.is_working || !workerId) {
     return [];
   }
 
-  const params = [date];
+  const params = [date, workerId];
   let exclusionClause = "";
 
   if (excludeBookingId) {
     params.push(excludeBookingId);
-    exclusionClause = "AND b.id <> $2";
+    exclusionClause = "AND b.id <> $3";
   }
 
   const bookingsResult = await executor(
@@ -67,18 +99,22 @@ async function getAvailableSlots(
       FROM bookings b
       JOIN services s ON s.id = b.service_id
       WHERE b.booking_date = $1
-        AND b.status = ANY($${excludeBookingId ? 3 : 2})
+        AND b.worker_id = $2
+        AND b.status = ANY($${excludeBookingId ? 4 : 3})
         ${exclusionClause}
     `,
     [...params, RESERVED_STATUSES]
   );
 
-  return generateSlots({
-    startTime: dayConfig.start_time.slice(0, 5),
-    endTime: dayConfig.end_time.slice(0, 5),
-    serviceDuration: Number(service.duration),
-    existingBookings: bookingsResult.rows
-  });
+  return filterPastSlotsForDate(
+    date,
+    generateSlots({
+      startTime: dayConfig.start_time.slice(0, 5),
+      endTime: dayConfig.end_time.slice(0, 5),
+      serviceDuration: Number(service.duration),
+      existingBookings: bookingsResult.rows
+    })
+  );
 }
 
 async function getRecentBookingAttempt(userId, executor = query) {
@@ -129,10 +165,14 @@ router.get("/", requireAuth, async (req, res) => {
           s.id AS service_id,
           s.name AS service_name,
           s.duration,
-          s.price
+          s.price,
+          b.worker_id,
+          COALESCE(TRIM(CONCAT(w.last_name, ' ', w.first_name)), 'Не назначен') AS worker_name,
+          w.position AS worker_position
         FROM bookings b
         JOIN users u ON u.id = b.user_id
         JOIN services s ON s.id = b.service_id
+        LEFT JOIN workers w ON w.id = b.worker_id
         WHERE ($1::text = 'admin' OR b.user_id = $2)
         ORDER BY b.booking_date ASC, b.booking_time ASC
       `,
@@ -152,6 +192,7 @@ router.get("/", requireAuth, async (req, res) => {
 
 router.post("/", requireAuth, async (req, res) => {
   let client;
+  let notificationsToBroadcast = [];
 
   try {
     if (req.user.role === "admin") {
@@ -160,12 +201,24 @@ router.post("/", requireAuth, async (req, res) => {
       });
     }
 
-    const { service_id, booking_date, booking_time } = req.body;
+    const { service_id, worker_id, booking_date, booking_time } = req.body;
 
-    if (!service_id || !booking_date || !booking_time) {
+    if (!service_id || !worker_id || !booking_date || !booking_time) {
       return res
         .status(400)
-        .json({ message: "Выберите услугу, дату и время записи" });
+        .json({ message: "Выберите услугу, исполнителя, дату и время записи" });
+    }
+
+    if (isPastIsoDate(booking_date)) {
+      return res.status(400).json({
+        message: "Нельзя создать запись на прошедшую дату"
+      });
+    }
+
+    if (isPastTimeForToday(booking_date, booking_time)) {
+      return res.status(400).json({
+        message: "Нельзя создать запись на уже прошедшее время"
+      });
     }
 
     client = await pool.connect();
@@ -271,9 +324,19 @@ router.post("/", requireAuth, async (req, res) => {
       return res.status(404).json({ message: "Услуга недоступна" });
     }
 
+    const worker = await getServiceWorker(service_id, worker_id, execute);
+
+    if (!worker) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({
+        message: "Исполнитель недоступен для выбранной услуги"
+      });
+    }
+
     const slots = await getAvailableSlots(
       booking_date,
       service_id,
+      worker_id,
       undefined,
       execute
     );
@@ -287,16 +350,56 @@ router.post("/", requireAuth, async (req, res) => {
 
     const result = await execute(
       `
-        INSERT INTO bookings (user_id, service_id, booking_date, booking_time, status)
-        VALUES ($1, $2, $3, $4, 'pending')
+        INSERT INTO bookings (
+          user_id,
+          service_id,
+          worker_id,
+          booking_date,
+          booking_time,
+          status
+        )
+        VALUES ($1, $2, $3, $4, $5, 'pending')
         RETURNING *
       `,
-      [req.user.id, service_id, booking_date, booking_time]
+      [req.user.id, service_id, worker_id, booking_date, booking_time]
     );
 
-    await client.query("COMMIT");
+    const createdBooking = result.rows[0];
+    const workerName = worker.full_name || worker.position || null;
 
-    return res.status(201).json(result.rows[0]);
+    const clientNotification = await notifyClientBookingCreated(
+      {
+        bookingId: createdBooking.id,
+        userId: req.user.id,
+        serviceName: service.name,
+        workerName,
+        bookingDate: booking_date,
+        bookingTime: booking_time
+      },
+      execute
+    );
+
+    const adminNotifications = await notifyAdminsAboutNewBooking(
+      {
+        bookingId: createdBooking.id,
+        clientName: req.user.name || "Клиент",
+        serviceName: service.name,
+        workerName,
+        bookingDate: booking_date,
+        bookingTime: booking_time
+      },
+      execute
+    );
+
+    notificationsToBroadcast = [
+      ...(clientNotification ? [clientNotification] : []),
+      ...(adminNotifications || [])
+    ];
+
+    await client.query("COMMIT");
+    broadcastNotificationsCreated(notificationsToBroadcast);
+
+    return res.status(201).json(createdBooking);
   } catch (error) {
     if (client) {
       await client.query("ROLLBACK").catch(() => {});
@@ -315,15 +418,26 @@ router.post("/", requireAuth, async (req, res) => {
 });
 
 router.put("/:id", requireAuth, async (req, res) => {
+  let client;
+  let notificationsToBroadcast = [];
+
   try {
     const { id } = req.params;
     const { booking_date, booking_time, status } = req.body;
 
-    const bookingResult = await query(
+    client = await pool.connect();
+    const execute = client.query.bind(client);
+
+    await client.query("BEGIN");
+
+    const bookingResult = await execute(
       `
         SELECT b.*, s.duration, s.is_active
+             , s.name AS service_name
+             , u.name AS user_name
         FROM bookings b
         JOIN services s ON s.id = b.service_id
+        JOIN users u ON u.id = b.user_id
         WHERE b.id = $1
       `,
       [id]
@@ -332,6 +446,7 @@ router.put("/:id", requireAuth, async (req, res) => {
     const booking = bookingResult.rows[0];
 
     if (!booking) {
+      await client.query("ROLLBACK");
       return res.status(404).json({ message: "Запись не найдена" });
     }
 
@@ -339,6 +454,7 @@ router.put("/:id", requireAuth, async (req, res) => {
     const isAdmin = req.user.role === "admin";
 
     if (!isOwner && !isAdmin) {
+      await client.query("ROLLBACK");
       return res.status(403).json({ message: "Нет доступа к записи" });
     }
 
@@ -356,7 +472,22 @@ router.put("/:id", requireAuth, async (req, res) => {
     let nextTime = booking.booking_time.slice(0, 5);
 
     if (booking_date && booking_time) {
+      if (isPastIsoDate(booking_date)) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({
+          message: "Нельзя перенести запись на прошедшую дату"
+        });
+      }
+
+      if (isPastTimeForToday(booking_date, booking_time)) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({
+          message: "Нельзя перенести запись на уже прошедшее время"
+        });
+      }
+
       if (["in_progress", "completed", "cancelled"].includes(booking.status)) {
+        await client.query("ROLLBACK");
         return res.status(400).json({
           message: "Эту запись больше нельзя переносить"
         });
@@ -365,10 +496,12 @@ router.put("/:id", requireAuth, async (req, res) => {
       const slots = await getAvailableSlots(
         booking_date,
         booking.service_id,
+        booking.worker_id,
         booking.id
       );
 
       if (!slots.includes(booking_time.slice(0, 5))) {
+        await client.query("ROLLBACK");
         return res
           .status(409)
           .json({ message: "Выбранный новый слот уже занят" });
@@ -382,7 +515,7 @@ router.put("/:id", requireAuth, async (req, res) => {
       }
     }
 
-    const result = await query(
+    const result = await execute(
       `
         UPDATE bookings
         SET booking_date = $1,
@@ -395,22 +528,81 @@ router.put("/:id", requireAuth, async (req, res) => {
       [nextDate, nextTime, nextStatus, id]
     );
 
+    if (booking_date && booking_time) {
+      const momentLabel = formatVisitMoment(nextDate, nextTime);
+
+      if (isAdmin && !isOwner) {
+        const clientNotification = await createNotification(
+          {
+            userId: booking.user_id,
+            type: "booking_rescheduled",
+            title: "Время записи изменено",
+            message: `Администратор перенёс вашу запись на услугу «${booking.service_name}». Новое время: ${momentLabel}.`,
+            linkPath: "/profile?tab=bookings",
+            entityId: booking.id
+          },
+          execute
+        );
+
+        notificationsToBroadcast = clientNotification
+          ? [clientNotification]
+          : [];
+      } else {
+        notificationsToBroadcast = await notifyAdminsBookingChanged(
+          {
+            bookingId: booking.id,
+            clientName: booking.user_name,
+            serviceName: booking.service_name,
+            bookingDate: nextDate,
+            bookingTime: nextTime,
+            actionLabel: "клиент перенёс запись"
+          },
+          execute
+        );
+      }
+    }
+
+    await client.query("COMMIT");
+    broadcastNotificationsCreated(notificationsToBroadcast);
+
     return res.json(result.rows[0]);
   } catch (error) {
+    if (client) {
+      await client.query("ROLLBACK").catch(() => {});
+    }
+
     return res.status(500).json({ message: "Не удалось обновить запись" });
+  } finally {
+    client?.release();
   }
 });
 
 router.delete("/:id", requireAuth, async (req, res) => {
+  let client;
+  let notificationsToBroadcast = [];
+
   try {
     const { id } = req.params;
 
-    const bookingResult = await query("SELECT * FROM bookings WHERE id = $1", [
-      id
-    ]);
+    client = await pool.connect();
+    const execute = client.query.bind(client);
+
+    await client.query("BEGIN");
+
+    const bookingResult = await execute(
+      `
+        SELECT b.*, s.name AS service_name, u.name AS user_name
+        FROM bookings b
+        JOIN services s ON s.id = b.service_id
+        JOIN users u ON u.id = b.user_id
+        WHERE b.id = $1
+      `,
+      [id]
+    );
     const booking = bookingResult.rows[0];
 
     if (!booking) {
+      await client.query("ROLLBACK");
       return res.status(404).json({ message: "Запись не найдена" });
     }
 
@@ -418,20 +610,23 @@ router.delete("/:id", requireAuth, async (req, res) => {
     const isAdmin = req.user.role === "admin";
 
     if (!isOwner && !isAdmin) {
+      await client.query("ROLLBACK");
       return res.status(403).json({ message: "Нет доступа к записи" });
     }
 
     if (["in_progress", "completed"].includes(booking.status)) {
+      await client.query("ROLLBACK");
       return res.status(400).json({
         message: "Нельзя отменить запись, услуга уже начата или завершена"
       });
     }
 
     if (booking.status === "cancelled") {
+      await client.query("ROLLBACK");
       return res.json({ message: "Запись уже отменена" });
     }
 
-    await query(
+    await execute(
       `
         UPDATE bookings
         SET status = 'cancelled',
@@ -441,9 +636,54 @@ router.delete("/:id", requireAuth, async (req, res) => {
       [id]
     );
 
+    if (isAdmin && !isOwner) {
+      const clientNotification = await notifyClientBookingStatusChanged(
+        {
+          bookingId: booking.id,
+          userId: booking.user_id,
+          serviceName: booking.service_name,
+          bookingDate:
+            typeof booking.booking_date === "string"
+              ? booking.booking_date.slice(0, 10)
+              : booking.booking_date.toISOString().slice(0, 10),
+          bookingTime: booking.booking_time,
+          status: "cancelled"
+        },
+        execute
+      );
+
+      notificationsToBroadcast = clientNotification
+        ? [clientNotification]
+        : [];
+    } else {
+      notificationsToBroadcast = await notifyAdminsBookingChanged(
+        {
+          bookingId: booking.id,
+          clientName: booking.user_name,
+          serviceName: booking.service_name,
+          bookingDate:
+            typeof booking.booking_date === "string"
+              ? booking.booking_date.slice(0, 10)
+              : booking.booking_date.toISOString().slice(0, 10),
+          bookingTime: booking.booking_time,
+          actionLabel: "клиент отменил запись"
+        },
+        execute
+      );
+    }
+
+    await client.query("COMMIT");
+    broadcastNotificationsCreated(notificationsToBroadcast);
+
     return res.json({ message: "Запись отменена" });
   } catch (error) {
+    if (client) {
+      await client.query("ROLLBACK").catch(() => {});
+    }
+
     return res.status(500).json({ message: "Не удалось отменить запись" });
+  } finally {
+    client?.release();
   }
 });
 
@@ -480,6 +720,9 @@ router.patch(
   requireAuth,
   requireRole("admin"),
   async (req, res) => {
+    let client;
+    let notificationsToBroadcast = [];
+
     try {
       const { id } = req.params;
       const { status } = req.body;
@@ -496,29 +739,43 @@ router.patch(
         return res.status(400).json({ message: "Некорректный статус" });
       }
 
-      const bookingResult = await query("SELECT * FROM bookings WHERE id = $1", [
-        id
-      ]);
+      client = await pool.connect();
+      const execute = client.query.bind(client);
+
+      await client.query("BEGIN");
+
+      const bookingResult = await execute(
+        `
+          SELECT b.*, s.name AS service_name
+          FROM bookings b
+          JOIN services s ON s.id = b.service_id
+          WHERE b.id = $1
+        `,
+        [id]
+      );
 
       const booking = bookingResult.rows[0];
 
       if (!booking) {
+        await client.query("ROLLBACK");
         return res.status(404).json({ message: "Запись не найдена" });
       }
 
       if (booking.status === status) {
+        await client.query("ROLLBACK");
         return res.json(booking);
       }
 
       const nextStatuses = ADMIN_STATUS_TRANSITIONS[booking.status] || [];
 
       if (!nextStatuses.includes(status)) {
+        await client.query("ROLLBACK");
         return res.status(400).json({
           message: "Для этой записи такое действие сейчас недоступно"
         });
       }
 
-      const result = await query(
+      const result = await execute(
         `
           UPDATE bookings
           SET status = $1,
@@ -530,14 +787,43 @@ router.patch(
       );
 
       if (!result.rowCount) {
+        await client.query("ROLLBACK");
         return res.status(404).json({ message: "Запись не найдена" });
       }
 
+      const clientNotification = await notifyClientBookingStatusChanged(
+        {
+          bookingId: booking.id,
+          userId: booking.user_id,
+          serviceName: booking.service_name,
+          bookingDate:
+            typeof booking.booking_date === "string"
+              ? booking.booking_date.slice(0, 10)
+              : booking.booking_date.toISOString().slice(0, 10),
+          bookingTime: booking.booking_time,
+          status
+        },
+        execute
+      );
+
+      notificationsToBroadcast = clientNotification
+        ? [clientNotification]
+        : [];
+
+      await client.query("COMMIT");
+      broadcastNotificationsCreated(notificationsToBroadcast);
+
       return res.json(result.rows[0]);
     } catch (error) {
+      if (client) {
+        await client.query("ROLLBACK").catch(() => {});
+      }
+
       return res
         .status(500)
         .json({ message: "Не удалось обновить статус записи" });
+    } finally {
+      client?.release();
     }
   }
 );

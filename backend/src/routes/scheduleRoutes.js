@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { query } from "../config/db.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
+import { filterPastSlotsForDate, isPastIsoDate } from "../utils/date.js";
 import { calculateLoad, generateSlots } from "../utils/slots.js";
 
 const router = Router();
@@ -55,12 +56,16 @@ router.put(
 
 router.get("/slots", async (req, res) => {
   try {
-    const { serviceId, date, excludeBookingId } = req.query;
+    const { serviceId, workerId, date, excludeBookingId } = req.query;
 
-    if (!serviceId || !date) {
+    if (!serviceId || !workerId || !date) {
       return res
         .status(400)
-        .json({ message: "Передайте serviceId и date для поиска слотов" });
+        .json({ message: "Передайте serviceId, workerId и date для поиска слотов" });
+    }
+
+    if (isPastIsoDate(date)) {
+      return res.json({ slots: [] });
     }
 
     const serviceResult = await query(
@@ -72,6 +77,21 @@ router.get("/slots", async (req, res) => {
 
     if (!service) {
       return res.status(404).json({ message: "Услуга не найдена" });
+    }
+
+    const workerResult = await query(
+      `
+        SELECT sw.worker_id
+        FROM service_workers sw
+        WHERE sw.service_id = $1 AND sw.worker_id = $2
+      `,
+      [serviceId, workerId]
+    );
+
+    if (!workerResult.rowCount) {
+      return res.status(404).json({
+        message: "Исполнитель не назначен на выбранную услугу"
+      });
     }
 
     const dayOfWeek = new Date(date).getUTCDay();
@@ -90,12 +110,12 @@ router.get("/slots", async (req, res) => {
       return res.json({ slots: [] });
     }
 
-    const params = [date];
+    const params = [date, workerId];
     let exclusionClause = "";
 
     if (excludeBookingId) {
       params.push(excludeBookingId);
-      exclusionClause = "AND b.id <> $2";
+      exclusionClause = "AND b.id <> $3";
     }
 
     const bookingsResult = await query(
@@ -104,18 +124,22 @@ router.get("/slots", async (req, res) => {
         FROM bookings b
         JOIN services s ON s.id = b.service_id
         WHERE b.booking_date = $1
-          AND b.status = ANY($${excludeBookingId ? 3 : 2})
+          AND b.worker_id = $2
+          AND b.status = ANY($${excludeBookingId ? 4 : 3})
           ${exclusionClause}
       `,
       [...params, RESERVED_STATUSES]
     );
 
-    const slots = generateSlots({
-      startTime: dayConfig.start_time.slice(0, 5),
-      endTime: dayConfig.end_time.slice(0, 5),
-      serviceDuration: Number(service.duration),
-      existingBookings: bookingsResult.rows
-    });
+    const slots = filterPastSlotsForDate(
+      date,
+      generateSlots({
+        startTime: dayConfig.start_time.slice(0, 5),
+        endTime: dayConfig.end_time.slice(0, 5),
+        serviceDuration: Number(service.duration),
+        existingBookings: bookingsResult.rows
+      })
+    );
 
     return res.json({ slots });
   } catch (error) {

@@ -265,8 +265,8 @@ export default function AuthPage({ initialMode = "login" }) {
         isLogin
           ? adminAccess
             ? "Введите пароль администратора для входа в рабочую панель."
-            : "Управляйте своими записями и бронированиями в одном месте."
-          : "Создайте профиль клиента, чтобы записываться на услуги, переносить визиты и управлять бронями."
+            : "Войдите в аккаунт клиента, чтобы записываться на услуги"
+          : "Создайте профиль клиента, чтобы записываться на услуги"
       }
       title={isLogin ? (adminAccess ? "Вход администратора" : "С возвращением") : "Создайте аккаунт"}
     >
@@ -279,7 +279,7 @@ export default function AuthPage({ initialMode = "login" }) {
           className={`absolute inset-0 ${
             isLogin
               ? "translate-x-0 opacity-100"
-              : "-translate-x-6 pointer-events-none opacity-0"
+              : "-translate-x-6 pointer-events-noneц opacity-0"
           }`}
         >
           <form className="space-y-5" onSubmit={handleLoginSubmit}>

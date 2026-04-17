@@ -4,11 +4,12 @@ import { api } from "../api/client.js";
 import BookingAdminActions from "../components/BookingAdminActions.jsx";
 import BookingStatusBadge from "../components/BookingStatusBadge.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import { getLocalIsoDate } from "../utils/date.js";
 
 function isoDate(offsetDays) {
   const date = new Date();
   date.setDate(date.getDate() + offsetDays);
-  return date.toISOString().slice(0, 10);
+  return getLocalIsoDate(date);
 }
 
 function bookingDateTime(booking) {
@@ -30,7 +31,7 @@ function monthMatrix(referenceDate, bookingsByDate) {
   return Array.from({ length: 35 }, (_, index) => {
     const day = new Date(start);
     day.setDate(start.getDate() + index);
-    const key = day.toISOString().slice(0, 10);
+    const key = getLocalIsoDate(day);
     return {
       key,
       date: day,

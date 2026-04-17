@@ -4,6 +4,7 @@ import AdminAnalyticsPage from "./AdminAnalyticsPage.jsx";
 import AdminDashboardPage from "./AdminDashboardPage.jsx";
 import CalendarPage from "./CalendarPage.jsx";
 import ManageServicesPage from "./ManageServicesPage.jsx";
+import WorkersPage from "./WorkersPage.jsx";
 
 const tabs = [
   {
@@ -41,11 +42,27 @@ const tabs = [
   {
     id: "services",
     label: "Услуги",
-    helper: "Каталог и мастера",
+    helper: "Каталог и цены",
     icon: (
       <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24">
         <path
           d="M7 7h10M7 12h10M7 17h6M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.8"
+        />
+      </svg>
+    )
+  },
+  {
+    id: "workers",
+    label: "Работники",
+    helper: "Сотрудники и роли",
+    icon: (
+      <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24">
+        <path
+          d="M15 19v-1a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v1M9.5 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM20 19v-1a3 3 0 0 0-2-2.83M14 5.17a3 3 0 0 1 0 5.66"
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -80,6 +97,8 @@ export default function AdminPage() {
 
   const content = useMemo(() => {
     switch (activeTab) {
+      case "workers":
+        return <WorkersPage />;
       case "analytics":
         return <AdminAnalyticsPage />;
       case "services":
