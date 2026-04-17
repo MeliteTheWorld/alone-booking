@@ -2,9 +2,18 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 export function getNotificationsWsUrl(token) {
   const baseUrl = API_URL.replace(/\/api\/?$/, "");
-  const wsBaseUrl = baseUrl.startsWith("https://")
-    ? baseUrl.replace("https://", "wss://")
-    : baseUrl.replace("http://", "ws://");
+  const resolvedBaseUrl = baseUrl
+    ? /^https?:\/\//.test(baseUrl)
+      ? baseUrl
+      : typeof window !== "undefined"
+        ? `${window.location.origin}${baseUrl}`
+        : baseUrl
+    : typeof window !== "undefined"
+      ? window.location.origin
+      : "";
+  const wsBaseUrl = resolvedBaseUrl.startsWith("https://")
+    ? resolvedBaseUrl.replace("https://", "wss://")
+    : resolvedBaseUrl.replace("http://", "ws://");
 
   return `${wsBaseUrl}/ws/notifications?token=${encodeURIComponent(token)}`;
 }

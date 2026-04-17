@@ -19,6 +19,8 @@ export function NotificationsProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const socketRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
+  const pollingIntervalRef = useRef(null);
+  const wsFallbackRef = useRef(false);
 
   const refresh = useCallback(
     async ({ silent = false } = {}) => {
@@ -62,12 +64,31 @@ export function NotificationsProvider({ children }) {
   }, [isAuthenticated, refresh]);
 
   useEffect(() => {
+    const stopPolling = () => {
+      if (pollingIntervalRef.current) {
+        window.clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+    };
+
+    const startPolling = () => {
+      if (pollingIntervalRef.current) {
+        return;
+      }
+
+      pollingIntervalRef.current = window.setInterval(() => {
+        refresh({ silent: true });
+      }, 30000);
+    };
+
     if (!isAuthenticated || !token) {
       if (reconnectTimeoutRef.current) {
         window.clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
       }
 
+      stopPolling();
+      wsFallbackRef.current = false;
       socketRef.current?.close();
       socketRef.current = null;
       return;
@@ -80,10 +101,18 @@ export function NotificationsProvider({ children }) {
         return;
       }
 
+      if (wsFallbackRef.current) {
+        startPolling();
+        return;
+      }
+
+      let hasOpened = false;
       const socket = new WebSocket(getNotificationsWsUrl(token));
       socketRef.current = socket;
 
       socket.addEventListener("open", () => {
+        hasOpened = true;
+        stopPolling();
         refresh({ silent: true });
       });
 
@@ -155,9 +184,15 @@ export function NotificationsProvider({ children }) {
           return;
         }
 
+        if (!hasOpened) {
+          wsFallbackRef.current = true;
+          startPolling();
+          return;
+        }
+
         reconnectTimeoutRef.current = window.setTimeout(() => {
           connect();
-        }, 2000);
+        }, 3000);
       });
 
       socket.addEventListener("error", () => {
@@ -175,6 +210,7 @@ export function NotificationsProvider({ children }) {
         reconnectTimeoutRef.current = null;
       }
 
+      stopPolling();
       socketRef.current?.close();
       socketRef.current = null;
     };
