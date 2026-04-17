@@ -93,7 +93,7 @@ function EyeIcon({ open }) {
 export default function AuthPage({ initialMode = "login" }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, register } = useAuth();
+  const { login, adminLogin, register } = useAuth();
   const requestedMode = normalizeMode(
     new URLSearchParams(location.search).get("mode") ?? initialMode
   );
@@ -153,14 +153,9 @@ export default function AuthPage({ initialMode = "login" }) {
     setLoginError("");
 
     try {
-      await login(
-        adminAccess
-          ? {
-              email: "admin@smartbooking.local",
-              password: loginForm.password
-            }
-          : loginForm
-      );
+      await (adminAccess
+        ? adminLogin({ password: loginForm.password })
+        : login(loginForm));
       navigate(adminAccess ? "/admin" : location.state?.from || "/services");
     } catch (submitError) {
       setLoginError(submitError.message);

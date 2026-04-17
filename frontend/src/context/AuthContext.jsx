@@ -33,6 +33,12 @@ export function AuthProvider({ children }) {
     return payload;
   };
 
+  const adminLogin = async (credentials) => {
+    const payload = await api.auth.adminLogin(credentials);
+    persistAuth(payload);
+    return payload;
+  };
+
   const register = async (credentials) => {
     const payload = await api.auth.register(credentials);
     persistAuth(payload);
@@ -69,6 +75,7 @@ export function AuthProvider({ children }) {
         isAuthenticated: Boolean(token),
         isAdmin: user?.role === "admin",
         login,
+        adminLogin,
         register,
         refreshProfile,
         updateProfile,

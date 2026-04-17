@@ -109,6 +109,43 @@ router.post("/login", async (req, res) => {
   }
 });
 
+router.post("/admin-login", async (req, res) => {
+  try {
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ message: "Введите пароль администратора" });
+    }
+
+    const result = await query(
+      `
+        SELECT id, name, email, password_hash, role, avatar_key
+        FROM users
+        WHERE role = 'admin'
+        ORDER BY id ASC
+        LIMIT 1
+      `
+    );
+
+    const user = result.rows[0];
+
+    if (!user || !verifyPassword(password, user.password_hash)) {
+      return res.status(401).json({ message: "Неверный пароль администратора" });
+    }
+
+    const safeUser = sanitizeUser(user);
+
+    return res.json({
+      token: buildToken(safeUser),
+      user: safeUser
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Не удалось выполнить вход администратора" });
+  }
+});
+
 router.get("/me", requireAuth, async (req, res) => {
   try {
     const result = await query(
