@@ -69,6 +69,10 @@ export const api = {
     remove: (id) =>
       request(`/services/${id}`, {
         method: "DELETE"
+      }),
+    removePermanent: (id) =>
+      request(`/services/${id}/permanent`, {
+        method: "DELETE"
       })
   },
   workers: {

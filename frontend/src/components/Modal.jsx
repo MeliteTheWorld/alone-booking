@@ -53,7 +53,9 @@ export default function Modal({
           )}
         </div>
 
-        <div className="max-h-[70vh] overflow-y-auto px-5 py-5 md:px-6">{children}</div>
+        {children ? (
+          <div className="max-h-[70vh] overflow-y-auto px-5 py-5 md:px-6">{children}</div>
+        ) : null}
 
         {footer && (
           <div className="flex flex-wrap justify-end gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4 md:px-6">

@@ -298,4 +298,56 @@ router.delete("/:id", requireAuth, requireRole("admin"), async (req, res) => {
   }
 });
 
+router.delete(
+  "/:id/permanent",
+  requireAuth,
+  requireRole("admin"),
+  async (req, res) => {
+    const client = await pool.connect();
+
+    try {
+      const { id } = req.params;
+      const bookingUsage = await client.query(
+        `
+          SELECT COUNT(*)::int AS count
+          FROM bookings
+          WHERE service_id = $1
+        `,
+        [id]
+      );
+
+      if (bookingUsage.rows[0].count > 0) {
+        return res.status(400).json({
+          message:
+            "Нельзя полностью удалить услугу, по ней уже есть записи. Сначала удалите связанные записи или оставьте услугу скрытой."
+        });
+      }
+
+      await client.query("BEGIN");
+      await client.query("DELETE FROM service_workers WHERE service_id = $1", [id]);
+      const deleted = await client.query(
+        `
+          DELETE FROM services
+          WHERE id = $1
+          RETURNING id
+        `,
+        [id]
+      );
+
+      if (!deleted.rowCount) {
+        await client.query("ROLLBACK");
+        return res.status(404).json({ message: "Услуга не найдена" });
+      }
+
+      await client.query("COMMIT");
+      return res.json({ message: "Услуга полностью удалена" });
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => {});
+      return res.status(500).json({ message: "Не удалось полностью удалить услугу" });
+    } finally {
+      client.release();
+    }
+  }
+);
+
 export default router;

@@ -139,7 +139,7 @@ export default function ManageServicesPage() {
   const handleDelete = async (service) => {
     const approved = await confirm({
       title: "Удалить услугу?",
-      description: `Услуга «${service.name}» исчезнет из клиентского каталога, но останется в истории записей.`,
+      description: `Услуга «${service.name}» будет полностью удалена из системы, если по ней нет записей.`,
       confirmText: "Да, удалить",
       cancelText: "Нет",
       tone: "danger"
@@ -152,8 +152,8 @@ export default function ManageServicesPage() {
     try {
       setError("");
       setMessage("");
-      await api.services.remove(service.id);
-      setMessage("Услуга скрыта из каталога");
+      await api.services.removePermanent(service.id);
+      setMessage("Услуга полностью удалена");
       await loadData();
     } catch (deleteError) {
       setError(deleteError.message);
@@ -175,7 +175,14 @@ export default function ManageServicesPage() {
             </p>
           </div>
 
-          <button className="admin-primary w-full lg:w-auto" onClick={openCreateModal} type="button">
+          <button
+            className="inline-flex w-full items-center justify-center gap-2 rounded-[22px] bg-[linear-gradient(135deg,#7c4ee4_0%,#8e63f5_100%)] px-5 py-3.5 text-sm font-bold text-white shadow-[0_16px_34px_rgba(124,78,228,0.24)] lg:w-auto"
+            onClick={openCreateModal}
+            type="button"
+          >
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/20 text-base leading-none">
+              +
+            </span>
             Новая услуга
           </button>
         </div>

@@ -44,6 +44,11 @@ export default function WorkersPage() {
     loadWorkers();
   }, []);
 
+  const assignedWorkersCount = workers.filter((worker) => worker.services_count > 0).length;
+  const uniquePositionsCount = new Set(
+    workers.map((worker) => worker.position?.trim()).filter(Boolean)
+  ).size;
+
   const openCreateModal = () => {
     setForm(emptyForm);
     setModalError("");
@@ -140,9 +145,37 @@ export default function WorkersPage() {
             </p>
           </div>
 
-          <button className="admin-primary w-full lg:w-auto" onClick={openCreateModal} type="button">
+          <button
+            className="inline-flex w-full items-center justify-center gap-2 rounded-[22px] bg-[linear-gradient(135deg,#7c4ee4_0%,#8e63f5_100%)] px-5 py-3.5 text-sm font-bold text-white shadow-[0_16px_34px_rgba(124,78,228,0.24)] lg:w-auto"
+            onClick={openCreateModal}
+            type="button"
+          >
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/20 text-base leading-none">
+              +
+            </span>
             Добавить работника
           </button>
+        </div>
+
+        <div className="mt-5 grid gap-3 md:grid-cols-3">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+            <div className="text-xs uppercase tracking-[0.16em] text-slate-400">
+              Всего работников
+            </div>
+            <div className="mt-2 text-2xl font-bold text-slate-900">{workers.length}</div>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+            <div className="text-xs uppercase tracking-[0.16em] text-slate-400">
+              Назначены в услуги
+            </div>
+            <div className="mt-2 text-2xl font-bold text-slate-900">{assignedWorkersCount}</div>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+            <div className="text-xs uppercase tracking-[0.16em] text-slate-400">
+              Уникальных ролей
+            </div>
+            <div className="mt-2 text-2xl font-bold text-slate-900">{uniquePositionsCount}</div>
+          </div>
         </div>
 
         {error && (
