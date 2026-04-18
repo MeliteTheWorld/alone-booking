@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import AdminAnalyticsPage from "./AdminAnalyticsPage.jsx";
 import BookingsPage from "./BookingsPage.jsx";
@@ -139,6 +139,19 @@ export default function AdminPage() {
     navigate(`/admin?tab=${tabId}`);
   };
 
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.history) {
+      return;
+    }
+
+    const previousScrollRestoration = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
+
+    return () => {
+      window.history.scrollRestoration = previousScrollRestoration;
+    };
+  }, []);
+
   useLayoutEffect(() => {
     if (firstRenderRef.current) {
       firstRenderRef.current = false;
@@ -149,10 +162,30 @@ export default function AdminPage() {
       return;
     }
 
-    window.scrollTo({
-      top: 0,
-      behavior: "auto"
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+
+    const resetScroll = () => {
+      window.scrollTo({ top: 0, behavior: "auto" });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+
+    resetScroll();
+
+    const rafId = window.requestAnimationFrame(() => {
+      resetScroll();
     });
+
+    const timeoutId = window.setTimeout(() => {
+      resetScroll();
+    }, 0);
+
+    return () => {
+      window.cancelAnimationFrame(rafId);
+      window.clearTimeout(timeoutId);
+    };
   }, [activeTab]);
 
   return (
