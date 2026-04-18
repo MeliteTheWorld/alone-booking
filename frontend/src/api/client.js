@@ -1,4 +1,23 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const WS_ENABLED_ENV = import.meta.env.VITE_NOTIFICATIONS_WS_ENABLED;
+
+export function isNotificationsWsEnabled() {
+  if (WS_ENABLED_ENV === "true") {
+    return true;
+  }
+
+  if (WS_ENABLED_ENV === "false") {
+    return false;
+  }
+
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  const hostname = window.location.hostname;
+
+  return hostname === "localhost" || hostname === "127.0.0.1";
+}
 
 export function getNotificationsWsUrl(token) {
   const baseUrl = API_URL.replace(/\/api\/?$/, "");

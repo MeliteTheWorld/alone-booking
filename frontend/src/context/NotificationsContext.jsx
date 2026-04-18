@@ -7,7 +7,11 @@ import {
   useRef,
   useState
 } from "react";
-import { api, getNotificationsWsUrl } from "../api/client.js";
+import {
+  api,
+  getNotificationsWsUrl,
+  isNotificationsWsEnabled
+} from "../api/client.js";
 import { useAuth } from "./AuthContext.jsx";
 
 const NotificationsContext = createContext(null);
@@ -190,6 +194,12 @@ export function NotificationsProvider({ children }) {
 
     const connect = () => {
       if (cancelled) {
+        return;
+      }
+
+      if (!isNotificationsWsEnabled()) {
+        wsFallbackRef.current = true;
+        startPolling();
         return;
       }
 
