@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useLayoutEffect, useMemo, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import AdminAnalyticsPage from "./AdminAnalyticsPage.jsx";
 import BookingsPage from "./BookingsPage.jsx";
@@ -6,6 +6,8 @@ import AdminDashboardPage from "./AdminDashboardPage.jsx";
 import CalendarPage from "./CalendarPage.jsx";
 import ManageServicesPage from "./ManageServicesPage.jsx";
 import WorkersPage from "./WorkersPage.jsx";
+
+const ADMIN_SCROLL_OFFSET = 16;
 
 const tabs = [
   {
@@ -111,6 +113,8 @@ export default function AdminPage() {
   const [searchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") || "overview";
   const activeMeta = tabs.find((tab) => tab.id === activeTab) || tabs[0];
+  const contentTopRef = useRef(null);
+  const firstRenderRef = useRef(true);
 
   const content = useMemo(() => {
     switch (activeTab) {
@@ -131,8 +135,33 @@ export default function AdminPage() {
   }, [activeTab]);
 
   const setTab = (tabId) => {
+    if (tabId === activeTab) {
+      return;
+    }
+
     navigate(`/admin?tab=${tabId}`);
   };
+
+  useLayoutEffect(() => {
+    if (firstRenderRef.current) {
+      firstRenderRef.current = false;
+      return;
+    }
+
+    if (typeof window === "undefined" || !contentTopRef.current) {
+      return;
+    }
+
+    const top =
+      window.scrollY +
+      contentTopRef.current.getBoundingClientRect().top -
+      ADMIN_SCROLL_OFFSET;
+
+    window.scrollTo({
+      top: Math.max(0, top),
+      behavior: "auto"
+    });
+  }, [activeTab]);
 
   return (
     <div className="admin-shell">
@@ -203,7 +232,10 @@ export default function AdminPage() {
           </div>
         </aside>
 
-        <section className="min-w-0 bg-[#f7f8fc] p-3 sm:p-4 md:p-6 xl:p-8">
+        <section
+          ref={contentTopRef}
+          className="min-w-0 bg-[#f7f8fc] p-3 sm:p-4 md:p-6 xl:p-8"
+        >
           <div className="mb-6 hidden items-center justify-between border-b border-slate-200 pb-5 md:flex">
             <div>
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-600">
@@ -218,7 +250,7 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div key={activeTab}>{content}</div>
+          <div>{content}</div>
         </section>
       </div>
     </div>
