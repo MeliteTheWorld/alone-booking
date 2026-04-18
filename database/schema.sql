@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS services (
   staff_name VARCHAR(160) NOT NULL DEFAULT 'Не назначен',
   worker_id INTEGER REFERENCES workers(id) ON DELETE SET NULL,
   duration INTEGER NOT NULL CHECK (duration > 0),
+  buffer_after_minutes INTEGER NOT NULL DEFAULT 0 CHECK (buffer_after_minutes >= 0),
   price NUMERIC(10, 2) NOT NULL CHECK (price >= 0),
   is_active BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -50,8 +51,19 @@ CREATE TABLE IF NOT EXISTS services (
 CREATE TABLE IF NOT EXISTS service_workers (
   service_id INTEGER NOT NULL REFERENCES services(id) ON DELETE CASCADE,
   worker_id INTEGER NOT NULL REFERENCES workers(id) ON DELETE CASCADE,
+  duration_minutes INTEGER CHECK (duration_minutes IS NULL OR duration_minutes > 0),
+  buffer_after_minutes INTEGER CHECK (buffer_after_minutes IS NULL OR buffer_after_minutes >= 0),
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   PRIMARY KEY (service_id, worker_id)
+);
+
+CREATE TABLE IF NOT EXISTS worker_business_hours (
+  worker_id INTEGER NOT NULL REFERENCES workers(id) ON DELETE CASCADE,
+  day_of_week SMALLINT NOT NULL CHECK (day_of_week BETWEEN 0 AND 6),
+  start_time TIME NOT NULL,
+  end_time TIME NOT NULL,
+  is_working BOOLEAN NOT NULL DEFAULT true,
+  PRIMARY KEY (worker_id, day_of_week)
 );
 
 CREATE TABLE IF NOT EXISTS business_hours (
@@ -68,6 +80,8 @@ CREATE TABLE IF NOT EXISTS bookings (
   worker_id INTEGER REFERENCES workers(id) ON DELETE SET NULL,
   booking_date DATE NOT NULL,
   booking_time TIME NOT NULL,
+  duration_minutes INTEGER NOT NULL DEFAULT 0 CHECK (duration_minutes >= 0),
+  buffer_after_minutes INTEGER NOT NULL DEFAULT 0 CHECK (buffer_after_minutes >= 0),
   status booking_status NOT NULL DEFAULT 'pending',
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -77,6 +91,7 @@ CREATE INDEX IF NOT EXISTS idx_bookings_user ON bookings(user_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_service ON bookings(service_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_worker ON bookings(worker_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_date_time ON bookings(booking_date, booking_time);
+CREATE INDEX IF NOT EXISTS idx_worker_business_hours_worker ON worker_business_hours(worker_id, day_of_week);
 CREATE INDEX IF NOT EXISTS idx_workers_name ON workers(last_name, first_name);
 CREATE INDEX IF NOT EXISTS idx_services_worker ON services(worker_id);
 CREATE INDEX IF NOT EXISTS idx_service_workers_worker ON service_workers(worker_id);

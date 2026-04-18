@@ -264,10 +264,11 @@ export default function AuthPage({ initialMode = "login" }) {
         }`}
       >
         <div
-          className={`absolute inset-0 ${
+          aria-hidden={!isLogin}
+          className={`auth-panel absolute inset-0 ${
             isLogin
-              ? "translate-x-0 opacity-100"
-              : "-translate-x-6 pointer-events-none opacity-0"
+              ? "auth-panel-visible auth-panel-enter-left"
+              : "auth-panel-hidden auth-panel-enter-left"
           }`}
         >
           <form className="space-y-5" onSubmit={handleLoginSubmit}>
@@ -325,7 +326,7 @@ export default function AuthPage({ initialMode = "login" }) {
             <label className="flex items-center gap-3 text-sm text-slate-500">
               <input
                 checked={rememberMe}
-                className="h-4 w-4 rounded border-slate-300 bg-white text-violet-500 focus:ring-violet-500"
+                className="h-4 w-4 rounded border-slate-300 bg-white text-violet-500 transition focus:ring-violet-500"
                 onChange={(event) => setRememberMe(event.target.checked)}
                 type="checkbox"
               />
@@ -404,10 +405,11 @@ export default function AuthPage({ initialMode = "login" }) {
         </div>
 
         <div
-          className={`absolute inset-0 ${
+          aria-hidden={isLogin}
+          className={`auth-panel absolute inset-0 ${
             !isLogin
-              ? "translate-x-0 opacity-100"
-              : "translate-x-6 pointer-events-none opacity-0"
+              ? "auth-panel-visible auth-panel-enter-right"
+              : "auth-panel-hidden auth-panel-enter-right"
           }`}
         >
           <form className="space-y-5" onSubmit={handleRegisterSubmit}>

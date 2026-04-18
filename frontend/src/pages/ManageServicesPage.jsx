@@ -9,7 +9,9 @@ const emptyForm = {
   name: "",
   description: "",
   worker_ids: [],
+  worker_settings: {},
   duration: 60,
+  buffer_after_minutes: 0,
   price: 1500,
   is_active: true
 };
@@ -68,7 +70,24 @@ export default function ManageServicesPage() {
       name: service.name,
       description: service.description,
       worker_ids: (service.workers || []).map((worker) => Number(worker.id)),
+      worker_settings: Object.fromEntries(
+        (service.workers || []).map((worker) => [
+          Number(worker.id),
+          {
+            duration_minutes:
+              worker.duration_minutes === null || worker.duration_minutes === undefined
+                ? ""
+                : String(worker.duration_minutes),
+            buffer_after_minutes:
+              worker.buffer_after_minutes === null ||
+              worker.buffer_after_minutes === undefined
+                ? ""
+                : String(worker.buffer_after_minutes)
+          }
+        ])
+      ),
       duration: String(service.duration),
+      buffer_after_minutes: String(service.buffer_after_minutes ?? 0),
       price: String(Number(service.price)),
       is_active: service.is_active
     });
@@ -96,11 +115,40 @@ export default function ManageServicesPage() {
 
       return {
         ...current,
+        worker_settings: hasWorker
+          ? Object.fromEntries(
+              Object.entries(current.worker_settings || {}).filter(
+                ([id]) => Number(id) !== workerId
+              )
+            )
+          : {
+              ...(current.worker_settings || {}),
+              [workerId]: current.worker_settings?.[workerId] || {
+                duration_minutes: "",
+                buffer_after_minutes: ""
+              }
+            },
         worker_ids: hasWorker
           ? current.worker_ids.filter((id) => id !== workerId)
           : [...current.worker_ids, workerId]
       };
     });
+  };
+
+  const handleWorkerSettingChange = (workerId, field, value) => {
+    setForm((current) => ({
+      ...current,
+      worker_settings: {
+        ...(current.worker_settings || {}),
+        [workerId]: {
+          ...(current.worker_settings?.[workerId] || {
+            duration_minutes: "",
+            buffer_after_minutes: ""
+          }),
+          [field]: value
+        }
+      }
+    }));
   };
 
   const handleSubmit = async (event) => {
@@ -116,6 +164,20 @@ export default function ManageServicesPage() {
         description: form.description,
         worker_ids: form.worker_ids,
         duration: Number(form.duration),
+        buffer_after_minutes: Number(form.buffer_after_minutes),
+        worker_settings: Object.entries(form.worker_settings || {}).map(
+          ([workerId, settings]) => ({
+            worker_id: Number(workerId),
+            duration_minutes:
+              settings.duration_minutes === ""
+                ? null
+                : Number(settings.duration_minutes),
+            buffer_after_minutes:
+              settings.buffer_after_minutes === ""
+                ? null
+                : Number(settings.buffer_after_minutes)
+          })
+        ),
         price: Number(form.price),
         is_active: Boolean(form.is_active)
       };
@@ -136,6 +198,10 @@ export default function ManageServicesPage() {
       setSubmitting(false);
     }
   };
+
+  const selectedWorkers = workers.filter((worker) =>
+    form.worker_ids.includes(worker.id)
+  );
 
   const handleDelete = async (service) => {
     const approved = await confirm({
@@ -377,6 +443,18 @@ export default function ManageServicesPage() {
                 value={form.duration}
               />
             </label>
+            <label className="block">
+              <span className="ui-label">Буфер после услуги, минут</span>
+              <input
+                className="admin-input"
+                min="0"
+                name="buffer_after_minutes"
+                onChange={handleChange}
+                required
+                type="number"
+                value={form.buffer_after_minutes}
+              />
+            </label>
           </div>
 
           <div className="block">
@@ -417,6 +495,76 @@ export default function ManageServicesPage() {
               </div>
             )}
           </div>
+
+          {!!selectedWorkers.length && (
+            <div className="block">
+              <span className="ui-label">
+                Переопределения для исполнителей
+              </span>
+              <div className="space-y-3">
+                {selectedWorkers.map((worker) => {
+                  const workerSettings = form.worker_settings?.[worker.id] || {
+                    duration_minutes: "",
+                    buffer_after_minutes: ""
+                  };
+
+                  return (
+                    <div
+                      key={worker.id}
+                      className="ui-card-muted grid gap-4 px-4 py-4 md:grid-cols-[minmax(0,1fr)_140px_140px]"
+                    >
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-slate-900">
+                          {worker.full_name}
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500">
+                          {worker.position}
+                        </div>
+                      </div>
+                      <label className="block">
+                        <span className="ui-label">Длительность</span>
+                        <input
+                          className="admin-input"
+                          min="1"
+                          onChange={(event) =>
+                            handleWorkerSettingChange(
+                              worker.id,
+                              "duration_minutes",
+                              event.target.value
+                            )
+                          }
+                          placeholder={String(form.duration)}
+                          type="number"
+                          value={workerSettings.duration_minutes}
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="ui-label">Буфер</span>
+                        <input
+                          className="admin-input"
+                          min="0"
+                          onChange={(event) =>
+                            handleWorkerSettingChange(
+                              worker.id,
+                              "buffer_after_minutes",
+                              event.target.value
+                            )
+                          }
+                          placeholder={String(form.buffer_after_minutes)}
+                          type="number"
+                          value={workerSettings.buffer_after_minutes}
+                        />
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-2 text-xs text-slate-500">
+                Оставьте поле пустым, если для сотрудника действует стандартное
+                время услуги и стандартный буфер.
+              </div>
+            </div>
+          )}
 
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block">

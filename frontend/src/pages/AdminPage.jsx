@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import AdminAnalyticsPage from "./AdminAnalyticsPage.jsx";
+import BookingsPage from "./BookingsPage.jsx";
 import AdminDashboardPage from "./AdminDashboardPage.jsx";
 import CalendarPage from "./CalendarPage.jsx";
 import ManageServicesPage from "./ManageServicesPage.jsx";
@@ -24,13 +25,29 @@ const tabs = [
     )
   },
   {
-    id: "calendar",
-    label: "Календарь",
-    helper: "Записи и график",
+    id: "bookings",
+    label: "Записи",
+    helper: "Календарь и заявки",
     icon: (
       <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24">
         <path
           d="M7 3v4M17 3v4M4 9h16M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.8"
+        />
+      </svg>
+    )
+  },
+  {
+    id: "calendar",
+    label: "График",
+    helper: "Рабочие часы",
+    icon: (
+      <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24">
+        <path
+          d="M4 19h16M7 15l3-3 2 2 5-6"
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -97,6 +114,8 @@ export default function AdminPage() {
 
   const content = useMemo(() => {
     switch (activeTab) {
+      case "bookings":
+        return <BookingsPage />;
       case "workers":
         return <WorkersPage />;
       case "analytics":

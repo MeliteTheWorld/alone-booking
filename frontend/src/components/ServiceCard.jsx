@@ -64,7 +64,7 @@ export default function ServiceCard({ service }) {
       : "добавить сотрудников"
     : hasWorkers
       ? "записаться"
-      : "сотрудники не назначены";
+      : "нет сотрудников";
 
   const actionTo = isAdmin
     ? hasWorkers
@@ -80,13 +80,15 @@ export default function ServiceCard({ service }) {
       ? "primary"
       : "disabled";
 
+  const compactActionLabel = !isAdmin && !hasWorkers;
+
   return (
     <article className="ui-card flex h-full flex-col p-5 sm:p-6 lg:p-8">
       <div className="min-h-[auto] sm:min-h-[118px] lg:min-h-[126px]">
-        <h3 className="text-[1.18rem] font-bold leading-tight text-slate-950 sm:text-[1.28rem]">
+        <h3 className="text-[1.28rem] font-bold leading-tight text-slate-950 sm:text-[1.38rem]">
           {service.name}
         </h3>
-        <p className="mt-3 min-h-[auto] text-[14px] leading-7 text-slate-500 sm:mt-4 sm:min-h-[52px]">
+        <p className="mt-3 min-h-[auto] text-[15px] leading-7 text-slate-500 sm:mt-4 sm:min-h-[52px]">
           {service.description || "Описание услуги пока не добавлено."}
         </p>
       </div>
@@ -107,14 +109,14 @@ export default function ServiceCard({ service }) {
 
       <div className="mt-auto pt-7 sm:pt-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-[1.75rem] font-semibold leading-none text-slate-950 sm:text-[2rem]">
+          <div className="text-[1.75rem] font-bold leading-none text-slate-950 whitespace-nowrap sm:text-[2rem]">
             {Number(service.price).toLocaleString("ru-RU")} ₽
           </div>
 
           <Button
-            className="w-full sm:w-auto sm:min-w-[170px]"
+            className={`w-full sm:w-auto sm:min-w-[158px] ${compactActionLabel ? "!text-[13px] sm:!text-sm" : ""}`}
             disabled={!hasWorkers && !isAdmin}
-            size="lg"
+            size="md"
             to={hasWorkers || isAdmin ? actionTo : undefined}
             type="button"
             variant={actionVariant}

@@ -10,15 +10,13 @@ import {
   notifyClientBookingStatusChanged
 } from "../utils/notifications.js";
 import {
-  filterPastSlotsForDate,
   isPastIsoDate,
   isPastTimeForToday
 } from "../utils/date.js";
-import { generateSlots } from "../utils/slots.js";
 import { broadcastNotificationsCreated } from "../ws/notificationHub.js";
+import { getAvailableSlotsForServiceWorker } from "../utils/availability.js";
 
 const router = Router();
-const RESERVED_STATUSES = ["pending", "confirmed", "in_progress", "completed"];
 const ACTIVE_BOOKING_STATUSES = ["pending", "confirmed", "in_progress"];
 const CLIENT_BOOKING_LIMITS = {
   cooldownSeconds: 15,
@@ -35,7 +33,16 @@ const ADMIN_STATUS_TRANSITIONS = {
 
 async function getService(serviceId, executor = query) {
   const result = await executor(
-    "SELECT id, name, duration, is_active FROM services WHERE id = $1",
+    `
+      SELECT
+        id,
+        name,
+        duration,
+        buffer_after_minutes,
+        is_active
+      FROM services
+      WHERE id = $1
+    `,
     [serviceId]
   );
   return result.rows[0];
@@ -47,7 +54,9 @@ async function getServiceWorker(serviceId, workerId, executor = query) {
       SELECT
         w.id,
         w.position,
-        TRIM(CONCAT(w.last_name, ' ', w.first_name)) AS full_name
+        TRIM(CONCAT(w.last_name, ' ', w.first_name)) AS full_name,
+        sw.duration_minutes,
+        sw.buffer_after_minutes
       FROM service_workers sw
       JOIN workers w ON w.id = sw.worker_id
       WHERE sw.service_id = $1 AND sw.worker_id = $2
@@ -58,63 +67,13 @@ async function getServiceWorker(serviceId, workerId, executor = query) {
   return result.rows[0] || null;
 }
 
-async function getDayConfig(date, executor = query) {
-  const dayOfWeek = new Date(date).getUTCDay();
-  const result = await executor(
-    `
-      SELECT start_time, end_time, is_working
-      FROM business_hours
-      WHERE day_of_week = $1
-    `,
-    [dayOfWeek]
-  );
-  return result.rows[0];
-}
-
-async function getAvailableSlots(
-  date,
-  serviceId,
-  workerId,
-  excludeBookingId,
-  executor = query
-) {
-  const service = await getService(serviceId, executor);
-  const dayConfig = await getDayConfig(date, executor);
-
-  if (!service || !service.is_active || !dayConfig?.is_working || !workerId) {
-    return [];
-  }
-
-  const params = [date, workerId];
-  let exclusionClause = "";
-
-  if (excludeBookingId) {
-    params.push(excludeBookingId);
-    exclusionClause = "AND b.id <> $3";
-  }
-
-  const bookingsResult = await executor(
-    `
-      SELECT b.booking_time, s.duration
-      FROM bookings b
-      JOIN services s ON s.id = b.service_id
-      WHERE b.booking_date = $1
-        AND b.worker_id = $2
-        AND b.status = ANY($${excludeBookingId ? 4 : 3})
-        ${exclusionClause}
-    `,
-    [...params, RESERVED_STATUSES]
-  );
-
-  return filterPastSlotsForDate(
-    date,
-    generateSlots({
-      startTime: dayConfig.start_time.slice(0, 5),
-      endTime: dayConfig.end_time.slice(0, 5),
-      serviceDuration: Number(service.duration),
-      existingBookings: bookingsResult.rows
-    })
-  );
+function resolveBookingTiming(service, worker) {
+  return {
+    durationMinutes: Number(worker?.duration_minutes ?? service.duration),
+    bufferAfterMinutes: Number(
+      worker?.buffer_after_minutes ?? service.buffer_after_minutes ?? 0
+    )
+  };
 }
 
 async function getRecentBookingAttempt(userId, executor = query) {
@@ -164,7 +123,9 @@ router.get("/", requireAuth, async (req, res) => {
           u.email AS user_email,
           s.id AS service_id,
           s.name AS service_name,
-          s.duration,
+          COALESCE(NULLIF(b.duration_minutes, 0), s.duration) AS duration,
+          b.duration_minutes,
+          b.buffer_after_minutes,
           s.price,
           b.worker_id,
           COALESCE(TRIM(CONCAT(w.last_name, ' ', w.first_name)), 'Не назначен') AS worker_name,
@@ -333,15 +294,19 @@ router.post("/", requireAuth, async (req, res) => {
       });
     }
 
-    const slots = await getAvailableSlots(
-      booking_date,
-      service_id,
-      worker_id,
-      undefined,
+    const timing = resolveBookingTiming(service, worker);
+    const availability = await getAvailableSlotsForServiceWorker(
+      {
+        serviceId: service_id,
+        workerId: worker_id,
+        date: booking_date,
+        durationOverride: timing.durationMinutes,
+        bufferAfterOverride: timing.bufferAfterMinutes
+      },
       execute
     );
 
-    if (!slots.includes(booking_time.slice(0, 5))) {
+    if (!availability.slots.includes(booking_time.slice(0, 5))) {
       await client.query("ROLLBACK");
       return res
         .status(409)
@@ -356,12 +321,22 @@ router.post("/", requireAuth, async (req, res) => {
           worker_id,
           booking_date,
           booking_time,
+          duration_minutes,
+          buffer_after_minutes,
           status
         )
-        VALUES ($1, $2, $3, $4, $5, 'pending')
+        VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')
         RETURNING *
       `,
-      [req.user.id, service_id, worker_id, booking_date, booking_time]
+      [
+        req.user.id,
+        service_id,
+        worker_id,
+        booking_date,
+        booking_time,
+        timing.durationMinutes,
+        timing.bufferAfterMinutes
+      ]
     );
 
     const createdBooking = result.rows[0];
@@ -432,7 +407,11 @@ router.put("/:id", requireAuth, async (req, res) => {
 
     const bookingResult = await execute(
       `
-        SELECT b.*, s.duration, s.is_active
+        SELECT
+          b.*,
+          s.duration,
+          s.buffer_after_minutes AS service_buffer_after_minutes,
+          s.is_active
              , s.name AS service_name
              , u.name AS user_name
         FROM bookings b
@@ -493,14 +472,23 @@ router.put("/:id", requireAuth, async (req, res) => {
         });
       }
 
-      const slots = await getAvailableSlots(
-        booking_date,
-        booking.service_id,
-        booking.worker_id,
-        booking.id
+      const availability = await getAvailableSlotsForServiceWorker(
+        {
+          serviceId: booking.service_id,
+          workerId: booking.worker_id,
+          date: booking_date,
+          excludeBookingId: booking.id,
+          durationOverride:
+            booking.duration_minutes || booking.duration,
+          bufferAfterOverride:
+            booking.buffer_after_minutes ??
+            booking.service_buffer_after_minutes ??
+            0
+        },
+        execute
       );
 
-      if (!slots.includes(booking_time.slice(0, 5))) {
+      if (!availability.slots.includes(booking_time.slice(0, 5))) {
         await client.query("ROLLBACK");
         return res
           .status(409)

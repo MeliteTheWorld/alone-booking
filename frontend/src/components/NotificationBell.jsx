@@ -106,7 +106,7 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-[calc(100%+10px)] z-30 w-[min(380px,calc(100vw-24px))] overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.16)] sm:w-[min(380px,calc(100vw-32px))]">
+        <div className="fixed left-3 right-3 top-[calc(env(safe-area-inset-top)+86px)] z-30 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.16)] sm:absolute sm:left-auto sm:right-0 sm:top-[calc(100%+10px)] sm:w-[min(380px,calc(100vw-32px))]">
           <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-5">
             <div>
               <div className="text-sm font-semibold text-slate-900">Уведомления</div>

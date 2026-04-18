@@ -8,8 +8,24 @@ const emptyForm = {
   id: null,
   first_name: "",
   last_name: "",
-  position: ""
+  position: "",
+  schedule: Array.from({ length: 7 }, (_, day_of_week) => ({
+    day_of_week,
+    start_time: "10:00",
+    end_time: "18:00",
+    is_working: day_of_week !== 0
+  }))
 };
+
+const scheduleLabels = [
+  "Воскресенье",
+  "Понедельник",
+  "Вторник",
+  "Среда",
+  "Четверг",
+  "Пятница",
+  "Суббота"
+];
 
 function getAssignLabel(count) {
   if (count === 1) {
@@ -61,7 +77,13 @@ export default function WorkersPage() {
       id: worker.id,
       first_name: worker.first_name,
       last_name: worker.last_name,
-      position: worker.position
+      position: worker.position,
+      schedule: (worker.schedule || emptyForm.schedule).map((day) => ({
+        day_of_week: day.day_of_week,
+        start_time: day.start_time,
+        end_time: day.end_time,
+        is_working: day.is_working
+      }))
     });
     setModalError("");
     setModalOpen(true);
@@ -78,6 +100,20 @@ export default function WorkersPage() {
     setForm((current) => ({ ...current, [name]: value }));
   };
 
+  const handleScheduleChange = (dayOfWeek, field, value) => {
+    setForm((current) => ({
+      ...current,
+      schedule: current.schedule.map((day) =>
+        day.day_of_week === dayOfWeek
+          ? {
+              ...day,
+              [field]: field === "is_working" ? Boolean(value) : value
+            }
+          : day
+      )
+    }));
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setSubmitting(true);
@@ -89,7 +125,8 @@ export default function WorkersPage() {
       const payload = {
         first_name: form.first_name,
         last_name: form.last_name,
-        position: form.position
+        position: form.position,
+        schedule: form.schedule
       };
 
       if (form.id) {
@@ -306,6 +343,66 @@ export default function WorkersPage() {
               value={form.position}
             />
           </label>
+
+          <div className="block">
+            <span className="ui-label">Рабочая неделя сотрудника</span>
+            <div className="space-y-3">
+              {form.schedule.map((day) => (
+                <div
+                  key={day.day_of_week}
+                  className="ui-card-muted grid gap-3 px-4 py-3 md:grid-cols-[minmax(0,1fr)_110px_110px]"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-semibold text-slate-900">
+                        {scheduleLabels[day.day_of_week]}
+                      </div>
+                    </div>
+                    <label className="flex items-center gap-2 text-sm text-slate-500">
+                      <input
+                        checked={day.is_working}
+                        onChange={(event) =>
+                          handleScheduleChange(
+                            day.day_of_week,
+                            "is_working",
+                            event.target.checked
+                          )
+                        }
+                        type="checkbox"
+                      />
+                      Рабочий
+                    </label>
+                  </div>
+                  <input
+                    className="admin-input"
+                    disabled={!day.is_working}
+                    onChange={(event) =>
+                      handleScheduleChange(
+                        day.day_of_week,
+                        "start_time",
+                        event.target.value
+                      )
+                    }
+                    type="time"
+                    value={day.start_time}
+                  />
+                  <input
+                    className="admin-input"
+                    disabled={!day.is_working}
+                    onChange={(event) =>
+                      handleScheduleChange(
+                        day.day_of_week,
+                        "end_time",
+                        event.target.value
+                      )
+                    }
+                    type="time"
+                    value={day.end_time}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
 
           {modalError && <div className="ui-alert-error">{modalError}</div>}
         </form>

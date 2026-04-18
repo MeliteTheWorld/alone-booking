@@ -10,6 +10,7 @@ const serviceSelect = `
     s.name,
     s.description,
     s.duration,
+    s.buffer_after_minutes,
     s.price,
     s.is_active,
     s.created_at,
@@ -28,7 +29,9 @@ const serviceSelect = `
           'first_name', w.first_name,
           'last_name', w.last_name,
           'full_name', TRIM(CONCAT(w.last_name, ' ', w.first_name)),
-          'position', w.position
+          'position', w.position,
+          'duration_minutes', sw.duration_minutes,
+          'buffer_after_minutes', sw.buffer_after_minutes
         )
       ) FILTER (WHERE w.id IS NOT NULL),
       '[]'::json
@@ -71,6 +74,16 @@ function normalizeNumeric(value) {
   return Number.isFinite(numericValue) ? numericValue : null;
 }
 
+function normalizePositiveInteger(value) {
+  const numericValue = normalizeNumeric(value);
+  return numericValue && numericValue > 0 ? numericValue : null;
+}
+
+function normalizeNonNegativeInteger(value) {
+  const numericValue = normalizeNumeric(value);
+  return numericValue !== null && numericValue >= 0 ? numericValue : null;
+}
+
 function normalizeWorkerIds(workerIds) {
   if (!Array.isArray(workerIds)) {
     return [];
@@ -79,20 +92,81 @@ function normalizeWorkerIds(workerIds) {
   return [...new Set(workerIds.map(normalizeNumeric).filter(Boolean))];
 }
 
-async function syncServiceWorkers(serviceId, workerIds, executor) {
+function normalizeWorkerSettings(
+  workerIds,
+  rawSettings,
+  defaultDuration,
+  defaultBufferAfter
+) {
+  const settingsMap = new Map();
+
+  if (Array.isArray(rawSettings)) {
+    rawSettings.forEach((item) => {
+      const workerId = normalizeNumeric(item?.worker_id);
+
+      if (!workerId) {
+        return;
+      }
+
+      settingsMap.set(workerId, item);
+    });
+  } else if (rawSettings && typeof rawSettings === "object") {
+    Object.entries(rawSettings).forEach(([workerId, item]) => {
+      const normalizedWorkerId = normalizeNumeric(workerId);
+
+      if (!normalizedWorkerId) {
+        return;
+      }
+
+      settingsMap.set(normalizedWorkerId, item);
+    });
+  }
+
+  return workerIds.map((workerId) => {
+    const rawItem = settingsMap.get(workerId) || {};
+    const durationMinutes = normalizePositiveInteger(rawItem.duration_minutes);
+    const bufferAfterMinutes = normalizeNonNegativeInteger(
+      rawItem.buffer_after_minutes
+    );
+
+    return {
+      worker_id: workerId,
+      duration_minutes:
+        durationMinutes && durationMinutes !== defaultDuration
+          ? durationMinutes
+          : null,
+      buffer_after_minutes:
+        bufferAfterMinutes !== null && bufferAfterMinutes !== defaultBufferAfter
+          ? bufferAfterMinutes
+          : null
+    };
+  });
+}
+
+async function syncServiceWorkers(serviceId, workerConfigs, executor) {
   await executor("DELETE FROM service_workers WHERE service_id = $1", [serviceId]);
 
-  if (!workerIds.length) {
+  if (!workerConfigs.length) {
     return;
   }
 
-  for (const workerId of workerIds) {
+  for (const worker of workerConfigs) {
     await executor(
       `
-        INSERT INTO service_workers (service_id, worker_id)
-        VALUES ($1, $2)
+        INSERT INTO service_workers (
+          service_id,
+          worker_id,
+          duration_minutes,
+          buffer_after_minutes
+        )
+        VALUES ($1, $2, $3, $4)
       `,
-      [serviceId, workerId]
+      [
+        serviceId,
+        worker.worker_id,
+        worker.duration_minutes,
+        worker.buffer_after_minutes
+      ]
     );
   }
 }
@@ -137,10 +211,20 @@ router.post("/", requireAuth, requireRole("admin"), async (req, res) => {
   try {
     const { name, description, duration, price, is_active } = req.body;
     const workerIds = normalizeWorkerIds(req.body.worker_ids);
+    const normalizedDuration = normalizePositiveInteger(duration);
+    const normalizedBufferAfter = normalizeNonNegativeInteger(
+      req.body.buffer_after_minutes
+    );
+    const normalizedPrice = normalizeNonNegativeInteger(price);
 
-    if (!name?.trim() || !duration || price === undefined || price === null) {
+    if (
+      !name?.trim() ||
+      !normalizedDuration ||
+      normalizedPrice === null ||
+      normalizedBufferAfter === null
+    ) {
       return res.status(400).json({
-        message: "Название, длительность и цена обязательны"
+        message: "Название, длительность, буфер и цена обязательны"
       });
     }
 
@@ -149,6 +233,13 @@ router.post("/", requireAuth, requireRole("admin"), async (req, res) => {
     if (workers.length !== workerIds.length) {
       return res.status(400).json({ message: "Часть выбранных работников не найдена" });
     }
+
+    const workerConfigs = normalizeWorkerSettings(
+      workerIds,
+      req.body.worker_settings,
+      normalizedDuration,
+      normalizedBufferAfter
+    );
 
     const staffName =
       workers.length === 0
@@ -167,10 +258,11 @@ router.post("/", requireAuth, requireRole("admin"), async (req, res) => {
           staff_name,
           worker_id,
           duration,
+          buffer_after_minutes,
           price,
           is_active
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING id
       `,
       [
@@ -178,13 +270,18 @@ router.post("/", requireAuth, requireRole("admin"), async (req, res) => {
         description?.trim() || "",
         staffName,
         workers[0]?.id || null,
-        duration,
-        price,
+        normalizedDuration,
+        normalizedBufferAfter,
+        normalizedPrice,
         is_active ?? true
       ]
     );
 
-    await syncServiceWorkers(result.rows[0].id, workerIds, client.query.bind(client));
+    await syncServiceWorkers(
+      result.rows[0].id,
+      workerConfigs,
+      client.query.bind(client)
+    );
     await client.query("COMMIT");
 
     const created = await query(`${serviceSelect} WHERE s.id = $1 GROUP BY s.id`, [
@@ -207,10 +304,20 @@ router.put("/:id", requireAuth, requireRole("admin"), async (req, res) => {
     const { id } = req.params;
     const { name, description, duration, price, is_active } = req.body;
     const workerIds = normalizeWorkerIds(req.body.worker_ids);
+    const normalizedDuration = normalizePositiveInteger(duration);
+    const normalizedBufferAfter = normalizeNonNegativeInteger(
+      req.body.buffer_after_minutes
+    );
+    const normalizedPrice = normalizeNonNegativeInteger(price);
 
-    if (!name?.trim() || !duration || price === undefined || price === null) {
+    if (
+      !name?.trim() ||
+      !normalizedDuration ||
+      normalizedPrice === null ||
+      normalizedBufferAfter === null
+    ) {
       return res.status(400).json({
-        message: "Название, длительность и цена обязательны"
+        message: "Название, длительность, буфер и цена обязательны"
       });
     }
 
@@ -219,6 +326,13 @@ router.put("/:id", requireAuth, requireRole("admin"), async (req, res) => {
     if (workers.length !== workerIds.length) {
       return res.status(400).json({ message: "Часть выбранных работников не найдена" });
     }
+
+    const workerConfigs = normalizeWorkerSettings(
+      workerIds,
+      req.body.worker_settings,
+      normalizedDuration,
+      normalizedBufferAfter
+    );
 
     const staffName =
       workers.length === 0
@@ -237,10 +351,11 @@ router.put("/:id", requireAuth, requireRole("admin"), async (req, res) => {
             staff_name = $3,
             worker_id = $4,
             duration = $5,
-            price = $6,
-            is_active = $7,
+            buffer_after_minutes = $6,
+            price = $7,
+            is_active = $8,
             updated_at = NOW()
-        WHERE id = $8
+        WHERE id = $9
         RETURNING id
       `,
       [
@@ -248,8 +363,9 @@ router.put("/:id", requireAuth, requireRole("admin"), async (req, res) => {
         description?.trim() || "",
         staffName,
         workers[0]?.id || null,
-        duration,
-        price,
+        normalizedDuration,
+        normalizedBufferAfter,
+        normalizedPrice,
         Boolean(is_active),
         id
       ]
@@ -260,7 +376,7 @@ router.put("/:id", requireAuth, requireRole("admin"), async (req, res) => {
       return res.status(404).json({ message: "Услуга не найдена" });
     }
 
-    await syncServiceWorkers(id, workerIds, client.query.bind(client));
+    await syncServiceWorkers(id, workerConfigs, client.query.bind(client));
     await client.query("COMMIT");
 
     const updated = await query(`${serviceSelect} WHERE s.id = $1 GROUP BY s.id`, [

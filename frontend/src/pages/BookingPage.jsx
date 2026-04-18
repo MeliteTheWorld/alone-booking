@@ -44,6 +44,12 @@ export default function BookingPage() {
       (worker) => String(worker.id) === String(selectedWorker)
     ) || null;
   const hasAssignedWorkers = (selectedServiceMeta?.workers || []).length > 0;
+  const effectiveDuration =
+    selectedWorkerMeta?.duration_minutes ?? selectedServiceMeta?.duration ?? null;
+  const effectiveBufferAfter =
+    selectedWorkerMeta?.buffer_after_minutes ??
+    selectedServiceMeta?.buffer_after_minutes ??
+    0;
 
   const serviceOptions = services.map((service) => ({
     value: String(service.id),
@@ -84,7 +90,7 @@ export default function BookingPage() {
   const canSubmit = !submitDisabledReason || submitDisabledReason === "Сохраняем...";
 
   if (isAdmin) {
-    return <Navigate replace to="/admin?tab=calendar" />;
+    return <Navigate replace to="/admin?tab=bookings" />;
   }
 
   useEffect(() => {
@@ -110,7 +116,8 @@ export default function BookingPage() {
         setSlots(response.slots);
         setSelectedTime("");
       } catch (loadError) {
-        setError(loadError.message);
+        setSlots([]);
+        setSelectedTime("");
       }
     }
 
@@ -169,7 +176,10 @@ export default function BookingPage() {
                 Длительность
               </div>
               <div className="mt-2 text-base font-semibold text-slate-900">
-                {selectedServiceMeta.duration} минут
+                {effectiveDuration} минут
+                {effectiveBufferAfter
+                  ? ` + ${effectiveBufferAfter} мин буфер`
+                  : ""}
               </div>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
@@ -393,7 +403,10 @@ export default function BookingPage() {
                         Длительность
                       </div>
                       <div className="mt-2 font-semibold text-slate-900">
-                        {selectedServiceMeta.duration} минут
+                        {effectiveDuration} минут
+                        {effectiveBufferAfter
+                          ? ` + ${effectiveBufferAfter} мин буфер`
+                          : ""}
                       </div>
                     </div>
                     <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">

@@ -48,6 +48,10 @@ export default function App() {
           path="admin"
         />
         <Route
+          element={<Navigate replace to="/admin?tab=bookings" />}
+          path="admin/bookings"
+        />
+        <Route
           element={<Navigate replace to="/admin?tab=services" />}
           path="admin/services"
         />

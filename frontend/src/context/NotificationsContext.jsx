@@ -11,6 +11,37 @@ import { api, getNotificationsWsUrl } from "../api/client.js";
 import { useAuth } from "./AuthContext.jsx";
 
 const NotificationsContext = createContext(null);
+const WS_DISABLE_COOLDOWN_MS = 5 * 60 * 1000;
+
+function getWsDisabledUntil() {
+  if (typeof window === "undefined") {
+    return 0;
+  }
+
+  return Number.parseInt(
+    window.sessionStorage.getItem("notifications-ws-disabled-until") ?? "0",
+    10
+  );
+}
+
+function disableWsTemporarily() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.sessionStorage.setItem(
+    "notifications-ws-disabled-until",
+    String(Date.now() + WS_DISABLE_COOLDOWN_MS)
+  );
+}
+
+function clearWsDisableFlag() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.sessionStorage.removeItem("notifications-ws-disabled-until");
+}
 
 export function NotificationsProvider({ children }) {
   const { isAuthenticated, token } = useAuth();
@@ -83,7 +114,21 @@ export function NotificationsProvider({ children }) {
 
       try {
         const payload = await api.notifications.getAll();
-        setItems(payload.items || []);
+        const nextItems = payload.items || [];
+        const previousItems = itemsRef.current;
+
+        if (silent && previousItems) {
+          const previousIds = new Set(previousItems.map((item) => item.id));
+          const newestIncomingNotification = nextItems.find(
+            (item) => !previousIds.has(item.id)
+          );
+
+          if (newestIncomingNotification) {
+            playNotificationSound(newestIncomingNotification.type);
+          }
+        }
+
+        setItems(nextItems);
         setUnreadCount(payload.unread_count || 0);
       } catch (error) {
         if (!silent) {
@@ -96,7 +141,7 @@ export function NotificationsProvider({ children }) {
         }
       }
     },
-    [isAuthenticated]
+    [isAuthenticated, playNotificationSound]
   );
 
   useEffect(() => {
@@ -148,7 +193,11 @@ export function NotificationsProvider({ children }) {
         return;
       }
 
-      if (wsFallbackRef.current) {
+      if (
+        wsFallbackRef.current ||
+        getWsDisabledUntil() > Date.now()
+      ) {
+        wsFallbackRef.current = true;
         startPolling();
         return;
       }
@@ -159,6 +208,7 @@ export function NotificationsProvider({ children }) {
 
       socket.addEventListener("open", () => {
         hasOpened = true;
+        clearWsDisableFlag();
         stopPolling();
         refresh({ silent: true });
       });
@@ -255,6 +305,7 @@ export function NotificationsProvider({ children }) {
         }
 
         if (!hasOpened) {
+          disableWsTemporarily();
           wsFallbackRef.current = true;
           startPolling();
           return;

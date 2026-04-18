@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api/client.js";
-import BookingAdminActions from "../components/BookingAdminActions.jsx";
+import AdminBookingListCard from "../components/AdminBookingListCard.jsx";
 import BookingStatusBadge from "../components/BookingStatusBadge.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { getLocalIsoDate } from "../utils/date.js";
@@ -68,13 +68,12 @@ const statsConfig = [
 const weekLabels = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 
 export default function AdminDashboardPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [summary, setSummary] = useState(null);
   const [load, setLoad] = useState([]);
   const [upcomingBookings, setUpcomingBookings] = useState([]);
-  const [actionableBookings, setActionableBookings] = useState([]);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
 
   async function loadData() {
     try {
@@ -91,13 +90,6 @@ export default function AdminDashboardPage() {
       setSummary(summaryPayload);
       setLoad(loadPayload);
       setUpcomingBookings(sortedUpcoming.slice(0, 6));
-      setActionableBookings(
-        sortedUpcoming
-          .filter((booking) =>
-            ["pending", "confirmed", "in_progress"].includes(booking.status)
-          )
-          .slice(0, 3)
-      );
     } catch (loadError) {
       setError(loadError.message);
     }
@@ -106,42 +98,6 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     loadData();
   }, []);
-
-  const handleStatusChange = async (id, status) => {
-    try {
-      setError("");
-      await api.bookings.updateStatus(id, status);
-      setMessage(
-        status === "confirmed"
-          ? "Запись подтверждена"
-          : status === "in_progress"
-            ? "Услуга переведена в работу"
-            : status === "completed"
-              ? "Услуга отмечена как оказанная"
-              : "Запись отменена администратором"
-      );
-      await loadData();
-    } catch (statusError) {
-      setError(statusError.message);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    const confirmed = window.confirm("Удалить запись из системы полностью?");
-
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      setError("");
-      await api.bookings.remove(id);
-      setMessage("Запись удалена");
-      await loadData();
-    } catch (deleteError) {
-      setError(deleteError.message);
-    }
-  };
 
   const bookingsCountByDate = useMemo(
     () =>
@@ -157,6 +113,13 @@ export default function AdminDashboardPage() {
     () => monthMatrix(new Date(), bookingsCountByDate),
     [bookingsCountByDate]
   );
+  const nextBookings = upcomingBookings.slice(0, 3);
+
+  const openBookingWorkspace = (booking) => {
+    navigate(
+      `/admin?tab=bookings&date=${booking.booking_date.slice(0, 10)}&bookingId=${booking.id}`
+    );
+  };
 
   return (
     <div className="space-y-5 md:space-y-6">
@@ -172,8 +135,8 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-          <Link className="admin-secondary w-full sm:w-auto" to="/admin?tab=calendar">
-            Полный календарь
+          <Link className="admin-secondary w-full sm:w-auto" to="/admin?tab=bookings">
+            Все записи
           </Link>
           <Link className="admin-primary w-full sm:w-auto" to="/admin?tab=services">
             Управление услугами
@@ -184,11 +147,6 @@ export default function AdminDashboardPage() {
       {error && (
         <div className="admin-card border-fuchsia-200 bg-fuchsia-50 px-5 py-4 text-sm text-fuchsia-700">
           {error}
-        </div>
-      )}
-      {message && (
-        <div className="admin-card border-violet-200 bg-violet-50 px-5 py-4 text-sm text-violet-700">
-          {message}
         </div>
       )}
 
@@ -221,86 +179,22 @@ export default function AdminDashboardPage() {
             <div>
               <h2 className="text-2xl font-bold text-slate-900">Ближайшие записи</h2>
               <p className="mt-1 text-sm text-slate-500">
-                Показываем только три ближайшие записи, чтобы администратор сразу видел главный приоритет.
+                Дашборд показывает только три ближайших визита. Полная работа с заявками теперь вынесена в отдельный раздел «Записи».
               </p>
             </div>
-            <Link className="text-sm font-semibold text-violet-600 hover:text-violet-700" to="/admin?tab=calendar">
+            <Link className="text-sm font-semibold text-violet-600 hover:text-violet-700" to="/admin?tab=bookings">
               Смотреть все
             </Link>
           </div>
 
-          {actionableBookings.length ? (
+          {nextBookings.length ? (
             <div className="grid gap-4 p-3 sm:p-4 md:p-5 xl:grid-cols-1">
-              {actionableBookings.map((booking) => (
-                <div
-                  className="rounded-[28px] border border-slate-200 bg-white p-4 sm:p-5 md:p-6"
+              {nextBookings.map((booking) => (
+                <AdminBookingListCard
+                  booking={booking}
                   key={booking.id}
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xl font-bold leading-tight text-slate-900 md:text-2xl">
-                        {booking.service_name}
-                      </div>
-                      <div className="mt-2 text-sm text-slate-500 sm:hidden">
-                        Приоритетная запись
-                      </div>
-                      <div className="mt-2 hidden text-sm text-slate-500 sm:block">
-                        Ближайшая запись клиента в работе администратора
-                      </div>
-                    </div>
-                    <BookingStatusBadge status={booking.status} />
-                  </div>
-
-                  <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                      <div className="text-xs uppercase tracking-[0.14em] text-slate-400">
-                        Клиент
-                      </div>
-                      <div className="mt-2 font-semibold text-slate-900">
-                        {booking.user_name}
-                      </div>
-                      <div className="mt-1 truncate text-sm text-slate-500">
-                        {booking.user_email}
-                      </div>
-                    </div>
-
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                      <div className="text-xs uppercase tracking-[0.14em] text-slate-400">
-                        Дата
-                      </div>
-                      <div className="mt-2 font-semibold text-slate-900">
-                        {new Date(booking.booking_date).toLocaleDateString("ru-RU", {
-                          day: "2-digit",
-                          month: "long"
-                        })}
-                      </div>
-                      <div className="mt-1 text-sm text-slate-500">
-                        {new Date(booking.booking_date).toLocaleDateString("ru-RU", {
-                          weekday: "long"
-                        })}
-                      </div>
-                    </div>
-
-                    <div className="rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3">
-                      <div className="text-xs uppercase tracking-[0.14em] text-violet-500">
-                        Время
-                      </div>
-                      <div className="mt-2 text-2xl font-bold text-violet-700">
-                        {booking.booking_time.slice(0, 5)}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-5">
-                    <BookingAdminActions
-                      compact
-                      fullWidth
-                      onAction={(status) => handleStatusChange(booking.id, status)}
-                      onDelete={() => handleDelete(booking.id)}
-                      status={booking.status}
-                    />
-                  </div>
-                </div>
+                  onClick={() => openBookingWorkspace(booking)}
+                />
               ))}
             </div>
           ) : (
@@ -381,7 +275,12 @@ export default function AdminDashboardPage() {
           </section>
 
           <section className="admin-card p-4 sm:p-5">
-            <h2 className="text-xl font-bold text-slate-900">Требуют внимания</h2>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-xl font-bold text-slate-900">Требуют внимания</h2>
+              <Link className="text-sm font-semibold text-violet-600 hover:text-violet-700" to="/admin?tab=bookings">
+                Открыть раздел
+              </Link>
+            </div>
             <div className="mt-4 space-y-3">
               {upcomingBookings.slice(0, 4).map((booking) => (
                 <div

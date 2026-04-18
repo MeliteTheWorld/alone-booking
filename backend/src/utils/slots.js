@@ -10,31 +10,52 @@ export function minutesToTime(minutes) {
   return `${hours}:${mins}`;
 }
 
+export function getOccupiedMinutes(booking) {
+  return (
+    Number(
+      booking.duration_minutes ??
+        booking.duration ??
+        booking.service_duration ??
+        0
+    ) +
+    Number(booking.buffer_after_minutes ?? booking.buffer_after ?? 0)
+  );
+}
+
+export function getBookingRange(booking) {
+  const bookingStart = timeToMinutes(String(booking.booking_time).slice(0, 5));
+  const bookingEnd = bookingStart + getOccupiedMinutes(booking);
+  return [bookingStart, bookingEnd];
+}
+
+export function hasRangeOverlap(leftStart, leftEnd, rightStart, rightEnd) {
+  return leftStart < rightEnd && leftEnd > rightStart;
+}
+
 export function generateSlots({
   startTime,
   endTime,
   serviceDuration,
+  bufferAfter = 0,
   existingBookings = [],
-  step = 30
+  step = 5
 }) {
   const scheduleStart = timeToMinutes(startTime);
   const scheduleEnd = timeToMinutes(endTime);
-  const occupiedRanges = existingBookings.map((booking) => {
-    const bookingStart = timeToMinutes(booking.booking_time.slice(0, 5));
-    const bookingEnd = bookingStart + Number(booking.duration);
-    return [bookingStart, bookingEnd];
-  });
+  const occupiedRanges = existingBookings.map(getBookingRange);
+  const totalOccupiedMinutes = Number(serviceDuration) + Number(bufferAfter);
 
   const slots = [];
 
   for (
     let slotStart = scheduleStart;
-    slotStart + serviceDuration <= scheduleEnd;
+    slotStart + totalOccupiedMinutes <= scheduleEnd;
     slotStart += step
   ) {
-    const slotEnd = slotStart + serviceDuration;
+    const slotEnd = slotStart + totalOccupiedMinutes;
     const hasOverlap = occupiedRanges.some(
-      ([busyStart, busyEnd]) => slotStart < busyEnd && slotEnd > busyStart
+      ([busyStart, busyEnd]) =>
+        hasRangeOverlap(slotStart, slotEnd, busyStart, busyEnd)
     );
 
     if (!hasOverlap) {
@@ -49,10 +70,9 @@ export function calculateLoad({ startTime, endTime, bookings = [] }) {
   const totalMinutes =
     Math.max(timeToMinutes(endTime) - timeToMinutes(startTime), 0) || 1;
   const bookedMinutes = bookings.reduce(
-    (sum, booking) => sum + Number(booking.duration),
+    (sum, booking) => sum + getOccupiedMinutes(booking),
     0
   );
 
   return Math.min(Math.round((bookedMinutes / totalMinutes) * 100), 100);
 }
-
