@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
+import AppPreloader from "./components/AppPreloader.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { ConfirmDialogProvider } from "./context/ConfirmDialogContext.jsx";
 import { NotificationsProvider } from "./context/NotificationsContext.jsx";
@@ -51,6 +52,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <NotificationsProvider>
           <ConfirmDialogProvider>
             <App />
+            <AppPreloader />
           </ConfirmDialogProvider>
         </NotificationsProvider>
       </AuthProvider>

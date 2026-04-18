@@ -34,7 +34,7 @@ export default function AppLayout() {
       <NavBar />
       <main className="mx-auto max-w-7xl px-3 py-4 sm:px-4 md:px-6 md:py-8 xl:px-8 xl:py-10">
         {isAdminRoute ? (
-          <div className={pageEnterClass} key={pageMotionKey}>
+          <div className="admin-no-motion" key={pageMotionKey}>
             <Outlet />
           </div>
         ) : (
