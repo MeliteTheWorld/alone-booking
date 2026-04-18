@@ -7,8 +7,6 @@ import CalendarPage from "./CalendarPage.jsx";
 import ManageServicesPage from "./ManageServicesPage.jsx";
 import WorkersPage from "./WorkersPage.jsx";
 
-const ADMIN_SCROLL_OFFSET = 16;
-
 const tabs = [
   {
     id: "overview",
@@ -113,7 +111,6 @@ export default function AdminPage() {
   const [searchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") || "overview";
   const activeMeta = tabs.find((tab) => tab.id === activeTab) || tabs[0];
-  const contentTopRef = useRef(null);
   const firstRenderRef = useRef(true);
 
   const content = useMemo(() => {
@@ -148,17 +145,12 @@ export default function AdminPage() {
       return;
     }
 
-    if (typeof window === "undefined" || !contentTopRef.current) {
+    if (typeof window === "undefined") {
       return;
     }
 
-    const top =
-      window.scrollY +
-      contentTopRef.current.getBoundingClientRect().top -
-      ADMIN_SCROLL_OFFSET;
-
     window.scrollTo({
-      top: Math.max(0, top),
+      top: 0,
       behavior: "auto"
     });
   }, [activeTab]);
@@ -232,10 +224,7 @@ export default function AdminPage() {
           </div>
         </aside>
 
-        <section
-          ref={contentTopRef}
-          className="min-w-0 bg-[#f7f8fc] p-3 sm:p-4 md:p-6 xl:p-8"
-        >
+        <section className="min-w-0 bg-[#f7f8fc] p-3 sm:p-4 md:p-6 xl:p-8">
           <div className="mb-6 hidden items-center justify-between border-b border-slate-200 pb-5 md:flex">
             <div>
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-600">
